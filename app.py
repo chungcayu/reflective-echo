@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QWidget,
     QTextEdit,
+    QMessageBox,
 )
 
 
@@ -47,9 +48,13 @@ class ReflectiveEchoUI(QMainWindow):
 
         # Create and style the buttons
         self.button_setting = QPushButton("设置")
+        self.button_setting.clicked.connect(self.openSettingsDialog)
         self.button_view = QPushButton("查看")
+        self.button_view.clicked.connect(self.showSavePath)
         self.button_about = QPushButton("关于")
+        self.button_about.clicked.connect(self.showAboutInfo)
         self.button_help = QPushButton("帮助")
+        self.button_help.clicked.connect(self.showHelpInfo)
 
         # Set a fixed width for the side buttons and margins to zero for them to be at the very edge.
         # self.button_width = 100
@@ -154,6 +159,18 @@ class ReflectiveEchoUI(QMainWindow):
         # Set the main widget and layout
         self.main_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.main_widget)
+
+    def openSettingsDialog(self):
+        pass
+
+    def showSavePath(self):
+        pass
+
+    def showAboutInfo(self):
+        QMessageBox.information(self, "关于", "这是关于应用的介绍。")
+
+    def showHelpInfo(self):
+        QMessageBox.information(self, "帮助", "这是使用说明。")
 
 
 if __name__ == "__main__":
