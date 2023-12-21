@@ -15,11 +15,11 @@ def load_key():
     return open("secret.key", "rb").read()
 
 
-def encrypt_api_key(api_key):
+def encrypt_api_key(api_key, file_path):
     key = load_key()
     f = Fernet(key)
     encrypted_api_key = f.encrypt(api_key.encode())
-    with open("api_key.encrypted", "wb") as file:
+    with open(file_path, "wb") as file:
         file.write(encrypted_api_key)
 
 
