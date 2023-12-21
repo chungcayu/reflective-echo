@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QFileDialog,
 )
-from PyQt6.QtGui import QDesktopServices
+from PyQt6.QtGui import QDesktopServices, QAction
 
 
 class SettingsDialog(QDialog):
@@ -111,6 +111,30 @@ class ReflectiveEchoUI(QMainWindow):
         # main_layout = QVBoxLayout()
         self.main_layout = QHBoxLayout()
 
+        # 创建菜单栏和菜单
+        menubar = self.menuBar()
+        settingsMenu = menubar.addMenu("设置")
+        viewMenu = menubar.addMenu("查看")
+        aboutMenu = menubar.addMenu("关于")
+        helpMenu = menubar.addMenu("帮助")
+
+        # 创建动作并添加到菜单
+        settingAction = QAction("设置", self)
+        settingAction.triggered.connect(self.openSettingsDialog)
+        settingsMenu.addAction(settingAction)
+
+        viewAction = QAction("查看", self)
+        viewAction.triggered.connect(self.showSavePath)
+        viewMenu.addAction(viewAction)
+
+        aboutAction = QAction("关于", self)
+        aboutAction.triggered.connect(self.showAboutInfo)
+        aboutMenu.addAction(aboutAction)
+
+        helpAction = QAction("帮助", self)
+        helpAction.triggered.connect(self.showHelpInfo)
+        helpMenu.addAction(helpAction)
+
         button_style = (
             "QPushButton {"
             "   width: 80px;"  # 设置宽度
@@ -120,31 +144,6 @@ class ReflectiveEchoUI(QMainWindow):
             "   background-color: gray;"  # 可选的背景颜色
             "}"
         )
-
-        # Side Layout
-        self.side_layout = QVBoxLayout()
-        self.side_layout.setSpacing(
-            10
-        )  # This sets the space between widgets in the layout.
-        self.side_layout.setAlignment(
-            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
-        )
-
-        # Create and style the buttons
-        self.button_setting = QPushButton("设置")
-        self.button_setting.clicked.connect(self.openSettingsDialog)
-        self.button_view = QPushButton("查看")
-        self.button_view.clicked.connect(self.showSavePath)
-        self.button_about = QPushButton("关于")
-        self.button_about.clicked.connect(self.showAboutInfo)
-        self.button_help = QPushButton("帮助")
-        self.button_help.clicked.connect(self.showHelpInfo)
-
-        # Add buttons to the layout with a margin at the top
-        self.side_layout.addWidget(self.button_setting)
-        self.side_layout.addWidget(self.button_view)
-        self.side_layout.addWidget(self.button_about)
-        self.side_layout.addWidget(self.button_help)
 
         # Main layout
         self.display_layout = QVBoxLayout()
@@ -226,7 +225,6 @@ class ReflectiveEchoUI(QMainWindow):
         self.setStyleSheet(button_style)
 
         # Add layouts to the main layout
-        self.main_layout.addLayout(self.side_layout)
         self.main_layout.addLayout(self.display_layout)
 
         # Set the main widget and layout
@@ -251,6 +249,7 @@ class ReflectiveEchoUI(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setApplicationName("ReflectiveEcho")
     ex = ReflectiveEchoUI()
     ex.show()
     sys.exit(app.exec())
