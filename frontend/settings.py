@@ -15,45 +15,54 @@ class SettingsDialog(QDialog):
         super().__init__()
 
         self.setWindowTitle("Settings")
-        self.setFixedSize(400, 300)  # 固定设置面板大小
+        self.setFixedSize(600, 300)  # 固定设置面板大小
 
-        grid_layout = QGridLayout(self)  # 使用网格布局
+        self.grid_layout = QGridLayout(self)  # 使用网格布局
 
         # 用户布局和组件
-        grid_layout.addWidget(QLabel("User:"), 0, 0)  # 第一行，第一列
-        user_text = QLineEdit("")
-        user_text.setFixedSize(100, 20)  # 固定大小
-        grid_layout.addWidget(user_text, 0, 1, 1, 2)  # 第一行，占据第二、三列
-
+        self.user_label = QLabel("用户称呼:")
+        # user_label.setAlignment(Qt.AlignmentFlag.AlignRight)  # 标签靠右对齐
+        self.grid_layout.addWidget(self.user_label, 0, 0)  # 第一行，第一列
+        self.user_text = QLineEdit("")
+        self.grid_layout.addWidget(self.user_text, 0, 1, 1, 2)  # 第一行，占据第二、三列
         # 添加分割线
-        grid_layout.addWidget(self.create_horizontal_separator(), 1, 0, 1, 3)
+        self.grid_layout.addWidget(self.create_horizontal_separator(), 1, 0, 1, 3)
 
         # 保存路径布局和组件
-        grid_layout.addWidget(QLabel("Document Save Location:"), 2, 0)
-        save_location_text = QLineEdit("")
-        grid_layout.addWidget(save_location_text, 2, 1)
-        choose_folder_button = QPushButton("Choose Folder")
-        choose_folder_button.clicked.connect(self.choose_folder)
-        grid_layout.addWidget(choose_folder_button, 2, 2)
+        self.save_location_label = QLabel("保存路径:")
+        # save_location_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.grid_layout.addWidget(self.save_location_label, 2, 0)
+        self.save_location_text = QLineEdit("")
+        self.grid_layout.addWidget(self.save_location_text, 2, 1)
+        self.choose_folder_button = QPushButton("选择文件夹")
+        self.choose_folder_button.clicked.connect(self.choose_folder)
+        self.grid_layout.addWidget(self.choose_folder_button, 2, 2)
 
         # 添加分割线
-        grid_layout.addWidget(self.create_horizontal_separator(), 3, 0, 1, 3)
+        self.grid_layout.addWidget(self.create_horizontal_separator(), 3, 0, 1, 3)
 
         # API密钥布局和组件
-        self.add_api_key_row("OpenAI API Key:", grid_layout, 4)
-        self.add_api_key_row("Xunfei API Key:", grid_layout, 5)
-        self.add_api_key_row("Huoshan API Key:", grid_layout, 6)
+        self.add_api_key_row("OpenAI API Key:", self.grid_layout, 4)
+        self.add_api_key_row("讯飞 App ID:", self.grid_layout, 5)
+        self.add_api_key_row("讯飞 API Key:", self.grid_layout, 6)
+        self.add_api_key_row("火山引擎 App ID:", self.grid_layout, 7)
+        self.add_api_key_row("火山引擎 Access Token:", self.grid_layout, 8)
+        self.add_api_key_row("火山引擎 Cluster ID:", self.grid_layout, 9)
 
         # 保存按钮
-        save_button = QPushButton("Save")
-        save_button.setFixedSize(100, 30)  # 固定大小
-        save_button.clicked.connect(self.save_settings)
-        grid_layout.addWidget(save_button, 7, 1, Qt.AlignmentFlag.AlignCenter)  # 居中
+        self.save_button = QPushButton("保存")
+        self.save_button.setFixedSize(100, 30)  # 固定大小
+        self.save_button.clicked.connect(self.save_settings)
+        self.grid_layout.addWidget(
+            self.save_button, 10, 1, Qt.AlignmentFlag.AlignCenter
+        )  # 居中
 
     def add_api_key_row(self, label_text, layout, row):
-        layout.addWidget(QLabel(label_text), row, 0)
+        api_key_label = QLabel(label_text)
+        # api_key_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(api_key_label, row, 0)
         api_text = QLineEdit("")
-        api_text.setFixedSize(100, 20)  # 固定大小
+        # api_text.setFixedSize(self.input_width, self.input_height)
         layout.addWidget(api_text, row, 1, 1, 2)  # 占据第二、三列
 
     def create_horizontal_separator(self):
@@ -63,7 +72,7 @@ class SettingsDialog(QDialog):
         return separator
 
     def choose_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select Folder")
+        folder = QFileDialog.getExistingDirectory(self, "选择文件夹")
         if folder:  # 确保用户选择了一个文件夹
             self.save_location_text.setText(folder)
 
