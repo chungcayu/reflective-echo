@@ -20,7 +20,7 @@ from pydub import AudioSegment
 from pydub.playback import play
 import speech_recognition as sr
 from websocket import create_connection, WebSocketConnectionClosedException
-
+from PyQt6.QtCore import QThread, pyqtSignal
 from .settings import get_api_key
 
 # hs_app_id = get_api_key("huoshan_app_id")
@@ -35,31 +35,61 @@ mm_api_key = get_api_key("minimax_api_key")
 """
 MiniMax API
 """
-
 mm_voice_id = "male-qn-qingse"
 
 
-def minimax_tts(text):
-    """调用MiniMax API，输入文本，返回语音文件"""
-    url = f"https://api.minimax.chat/v1/text_to_speech?GroupId={mm_group_id}"
-    headers = {
-        "Authorization": f"Bearer {mm_api_key}",
-        "Content-Type": "application/json",
-    }
-    data = {
-        "voice_id": mm_voice_id,
-        "text": text,
-        "model": "speech-01",
-        "speed": 1.0,
-        "vol": 1.0,
-        "pitch": 0,
-    }
-    response = requests.post(url, headers=headers, json=data)
-    print("trace_id", response.headers.get("Trace-Id"))
-    if response.status_code != 200 or "json" in response.headers["Content-Type"]:
-        print("调用失败", response.status_code, response.text)
-        exit()
-    return response.content
+class TextToSpeechThread(QThread):
+    finished_signal = pyqtSignal(bytes)
+
+    def __init__(self, text):
+        super().__init__()
+        self.text = text
+
+    def run(self):
+        response_content = self.minimax_tts(self.text)
+        self.finished_signal.emit(response_content)
+
+    def minimax_tts(self, text):
+        """调用MiniMax API，输入文本，返回语音文件"""
+        url = f"https://api.minimax.chat/v1/text_to_speech?GroupId={mm_group_id}"
+        headers = {
+            "Authorization": f"Bearer {mm_api_key}",
+            "Content-Type": "application/json",
+        }
+        data = {
+            "voice_id": mm_voice_id,
+            "text": text,
+            "model": "speech-01",
+            "speed": 1.0,
+            "vol": 1.0,
+            "pitch": 0,
+        }
+        response = requests.post(url, headers=headers, json=data)
+        if response.status_code != 200 or "json" in response.headers["Content-Type"]:
+            print("调用失败", response.status_code, response.text)
+            return None
+        return response.content
+
+
+def play_response_audio(response_content):
+    """输入响应内容，播放音频"""
+    byte_stream = io.BytesIO(response_content)
+    audio = AudioSegment.from_file(byte_stream, format="mp3")
+    play(audio)
+
+
+current_tts_thread = None
+
+
+def transcribe_text_to_speech(text):
+    """创建TextToSpeechThread线程来处理文本到语音转换"""
+    global current_tts_thread
+    if current_tts_thread is not None and current_tts_thread.isRunning():
+        current_tts_thread.terminate()
+
+    current_tts_thread = TextToSpeechThread(text)
+    current_tts_thread.finished_signal.connect(play_response_audio)
+    current_tts_thread.start()
 
 
 """
@@ -360,12 +390,12 @@ def save_audio(file_path, response):
         f.write(response.content)
 
 
-def transcribe_text_to_speech(text):
-    # response = huoshan_tts(text)
-    response = minimax_tts(text)
-    # response = openai_tts(text)
-    print("⭕️ 开始播放语音...\n\n")
-    play_response_audio(response)
+# def transcribe_text_to_speech(text):
+#     # response = huoshan_tts(text)
+#     response = minimax_tts(text)
+#     # response = openai_tts(text)
+#     print("⭕️ 开始播放语音...\n\n")
+#     play_response_audio(response)
 
 
 def transcribe_speech_to_text():

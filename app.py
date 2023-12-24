@@ -1,5 +1,8 @@
 import sys
-from PyQt6.QtCore import Qt, QUrl
+import datetime
+import time
+import threading
+from PyQt6.QtCore import Qt, QUrl, QObject, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -16,16 +19,127 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QDesktopServices, QAction
 
-from settings import SettingsDialog
+from utils import settings, llm, voice
+from utils.settings import SettingsDialog
+
+
+class ChatBackend(QObject):
+    text_updated = pyqtSignal(str)
+
+    def receive_text(self, text):
+        # 发射文本更新的信号
+        self.text_updated.emit(text)
+
+
+class ReflectionThread(QThread):
+    update_text_signal = pyqtSignal(str)
+
+    def __init__(self, assistant, chat_backend):
+        QThread.__init__(self)
+        self.assistant = assistant
+        self.chat_backend = chat_backend
+
+    def run(self):
+        # 在后台线程中执行耗时操作
+        self.assistant.initialize_session()
+
+
+class Assistant:
+    def __init__(self, chat_backend):
+        self.chat_backend = chat_backend
+        self.user_name = settings.get_user_name()
+        self.save_path = settings.get_save_path()
+        today = datetime.datetime.now()
+        self.year_number = today.isocalendar()[0]
+        self.week_number = today.isocalendar()[1]
+        self.title = f"{self.year_number}{self.week_number}"
+        self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.chatlog_path = f"{self.save_path}/{self.title}-wr-chatlog.md"
+        self.report_path = f"{self.save_path}/{self.title}-wr-report.md"
+
+    def send_to_gui(self, text):
+        """将文本发送到GUI"""
+        self.chat_backend.receive_text(text)
+
+    def initialize_session(self):
+        self.send_to_gui("准备复盘...")
+        thread_id = llm.create_thread()
+        user_message = f"用户称呼：{self.user_name}"
+        print(user_message)
+        self.chat_with_assistant(user_message, thread_id)
+        print("对话初始化完成")
+        with open(self.chatlog_path, "w") as file:
+            file.write(f"# Weekly Review {self.year_number}{self.week_number}\n\n")
+            file.write(f"> Created by {self.user_name} on {self.timestamp}\n\n")
+        return thread_id
+
+    def chat_with_assistant(self, user_message, thread_id):
+        assistant_id = "asst_40vLVijSiJ0cRONnIFPOaeas"
+        message = llm.create_message(user_message, thread_id)
+        run_id = llm.run_thread(thread_id, assistant_id)
+        print("正在与智能助手对话...")
+
+        status = None
+        while status != "completed":
+            status = llm.check_run_status(thread_id, run_id)
+            time.sleep(0.5)
+            if status == "failed":
+                break
+
+        if status == "completed":
+            print("对话完成")
+            messages = llm.retrieve_message_list(thread_id)
+            response = messages[0].content[0].text.value
+            print(response)
+            # voice.transcribe_text_to_speech(response)
+            voice.transcribe_text_to_speech(response)
+            self.send_to_gui(response)
+
+    def save_chatlog(self, thread_id):
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        messages = llm.retrieve_message_list(thread_id)
+        messages = reversed(messages)
+        with open(self.chatlog_path, "a") as f:
+            f.write("## 对话记录\n\n")
+
+            for i in messages:
+                role = i.role
+                text = i.content[0].text.value
+                if role == "assistant":
+                    f.write(f"**Echo**: {text}\n\n")
+                else:
+                    f.write(f"**{self.user_name}**: {text}\n\n")
+
+            f.write("---\n\n")
+            f.write("对话记录生成于： " + timestamp + "\n\n")
+        self.send_to_gui("对话记录已保存，正在生成周复盘报告...")
+
+    def generate_report(self, chatlog_path, report_path):
+        system_prompt = """你是一个报告写作大师。你的导师要求你写一份周总结。"""
+        with open(chatlog_path, "r") as file:
+            user_message = file.read()
+        response = llm.generate_text_from_oai(system_prompt, user_message)
+        with open(report_path, "w") as file:
+            file.write(response)
+        self.send_to_gui("您的周总结成功生成")
 
 
 class ReflectiveEchoUI(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Reflective Echo")
-        self.setGeometry(100, 100, 800, 600)
-        self.setFixedSize(800, 600)
+        self.setGeometry(100, 100, 700, 600)
+        self.setFixedSize(700, 600)
+        self.chat_backend = ChatBackend()
+        self.chat_backend.text_updated.connect(self.update_assistant_message)
+        self.assistant = Assistant(self.chat_backend)
+        self.tts_thread = None
         self.initUI()
+
+        self.reflection_thread = ReflectionThread(self.assistant, self.chat_backend)
+        self.reflection_thread.update_text_signal.connect(
+            self.chat_backend.receive_text
+        )
 
     def initUI(self):
         # Create the main widget and layout
@@ -87,7 +201,7 @@ class ReflectiveEchoUI(QMainWindow):
             "ReflectiveEcho, the AI-driven conversation partner that makes weekly reflection as easy and natural as chatting with a friend."
         )
         self.assistant_message.setWordWrap(True)
-        self.assistant_message.setFixedSize(550, 200)
+        self.assistant_message.setFixedSize(600, 200)
         self.assistant_message.setStyleSheet(
             "QLabel {"
             "   border: 1px solid gray;"
@@ -108,7 +222,7 @@ class ReflectiveEchoUI(QMainWindow):
             Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight
         )
         self.user_message = QTextEdit("")
-        self.user_message.setFixedSize(550, 320)
+        self.user_message.setFixedSize(600, 320)
         self.user_message.setStyleSheet(
             "QTextEdit {"
             "   border: 1px solid gray;"  # Adjusted border width
@@ -131,6 +245,7 @@ class ReflectiveEchoUI(QMainWindow):
         )
 
         self.button_start = QPushButton("开始复盘")
+        self.button_start.clicked.connect(self.start_reflection)
         self.bottom_speak = QPushButton("🎙️")
         self.bottom_submit = QPushButton("⌨️")
         self.bottom_finish = QPushButton("结束复盘")
@@ -167,6 +282,13 @@ class ReflectiveEchoUI(QMainWindow):
 
     def showHelpInfo(self):
         QDesktopServices.openUrl(QUrl("https://github.com/chungcayu/reflective-echo"))
+
+    def update_assistant_message(self, text):
+        # 这是一个槽函数，用来接收新文本并更新assistant_message QLabel
+        self.assistant_message.setText(text)
+
+    def start_reflection(self):
+        self.reflection_thread.start()
 
 
 if __name__ == "__main__":

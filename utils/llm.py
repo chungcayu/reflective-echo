@@ -1,23 +1,16 @@
 # llm.py
-import os
-import time
-from dotenv import load_dotenv
 from openai import OpenAI
 
-from .settings import get_api_key
+from utils import settings
+# from .settings import get_api_key
 
 
 """
 调用 OpenAI API
 """
-load_dotenv()
 
-openai_api_key = get_api_key("openai_api_key")
+openai_api_key = settings.get_api_key("openai_api_key")
 client = OpenAI(api_key=openai_api_key)
-
-
-def get_assistant_id():
-    return os.getenv("OPENAI_ASSISTANT_ID")
 
 
 # Create a thread
