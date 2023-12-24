@@ -2,6 +2,7 @@ import sys
 import datetime
 import time
 import threading
+import io
 from PyQt6.QtCore import Qt, QUrl, QObject, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QApplication,
@@ -13,14 +14,14 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QLabel,
     QTextEdit,
-    QLineEdit,
-    QMessageBox,
-    QFileDialog,
 )
 from PyQt6.QtGui import QDesktopServices, QAction
+from pydub import AudioSegment
+from pydub.playback import play
 
 from utils import settings, llm, voice
 from utils.settings import SettingsDialog
+from utils.voice import TextToSpeechThread
 
 
 class ChatBackend(QObject):
@@ -41,29 +42,31 @@ class ReflectionThread(QThread):
 
     def run(self):
         # 在后台线程中执行耗时操作
-        self.assistant.initialize_session()
+        self.assistant.initialize_session(self.assistant.thread_id)
 
 
 class Assistant:
-    def __init__(self, chat_backend):
+    def __init__(self, chat_backend, start_tts_signal):
         self.chat_backend = chat_backend
+        self.start_tts_signal = start_tts_signal
         self.user_name = settings.get_user_name()
         self.save_path = settings.get_save_path()
+        self.thread_id = llm.create_thread()
         today = datetime.datetime.now()
         self.year_number = today.isocalendar()[0]
         self.week_number = today.isocalendar()[1]
-        self.title = f"{self.year_number}{self.week_number}"
-        self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.chatlog_path = f"{self.save_path}/{self.title}-wr-chatlog.md"
-        self.report_path = f"{self.save_path}/{self.title}-wr-report.md"
+        self.timestamp = today.strftime("%Y%m%d%H%M%S")
+        self.title = f"{self.timestamp}-{self.year_number}w{self.week_number}"
+
+        self.chatlog_path = f"{self.save_path}/{self.title}-chatlog.md"
+        self.report_path = f"{self.save_path}/{self.title}-report.md"
 
     def send_to_gui(self, text):
         """将文本发送到GUI"""
         self.chat_backend.receive_text(text)
 
-    def initialize_session(self):
+    def initialize_session(self, thread_id):
         self.send_to_gui("准备复盘...")
-        thread_id = llm.create_thread()
         user_message = f"用户称呼：{self.user_name}"
         print(user_message)
         self.chat_with_assistant(user_message, thread_id)
@@ -71,7 +74,6 @@ class Assistant:
         with open(self.chatlog_path, "w") as file:
             file.write(f"# Weekly Review {self.year_number}{self.week_number}\n\n")
             file.write(f"> Created by {self.user_name} on {self.timestamp}\n\n")
-        return thread_id
 
     def chat_with_assistant(self, user_message, thread_id):
         assistant_id = "asst_40vLVijSiJ0cRONnIFPOaeas"
@@ -92,7 +94,7 @@ class Assistant:
             response = messages[0].content[0].text.value
             print(response)
             # voice.transcribe_text_to_speech(response)
-            voice.transcribe_text_to_speech(response)
+            self.start_tts_signal.emit(response)
             self.send_to_gui(response)
 
     def save_chatlog(self, thread_id):
@@ -125,6 +127,8 @@ class Assistant:
 
 
 class ReflectiveEchoUI(QMainWindow):
+    start_tts_signal = pyqtSignal(str)
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Reflective Echo")
@@ -132,7 +136,8 @@ class ReflectiveEchoUI(QMainWindow):
         self.setFixedSize(700, 600)
         self.chat_backend = ChatBackend()
         self.chat_backend.text_updated.connect(self.update_assistant_message)
-        self.assistant = Assistant(self.chat_backend)
+        self.start_tts_signal.connect(self.start_text_to_speech)
+        self.assistant = Assistant(self.chat_backend, self.start_tts_signal)
         self.tts_thread = None
         self.initUI()
 
@@ -248,7 +253,9 @@ class ReflectiveEchoUI(QMainWindow):
         self.button_start.clicked.connect(self.start_reflection)
         self.bottom_speak = QPushButton("🎙️")
         self.bottom_submit = QPushButton("⌨️")
+        self.bottom_submit.clicked.connect(self.submit_user_message)
         self.bottom_finish = QPushButton("结束复盘")
+        self.bottom_finish.clicked.connect(self.finish_reflection)
 
         self.button_layout.addWidget(self.button_start)
         self.button_layout.addWidget(self.bottom_speak)
@@ -289,6 +296,38 @@ class ReflectiveEchoUI(QMainWindow):
 
     def start_reflection(self):
         self.reflection_thread.start()
+
+    def start_text_to_speech(self, text):
+        # 现在这个方法会启动文本到语音的转换
+        if self.tts_thread is not None and self.tts_thread.isRunning():
+            self.tts_thread.wait()
+
+        self.tts_thread = TextToSpeechThread(text)
+        self.tts_thread.finished_signal.connect(self.play_response_audio)
+        self.tts_thread.start()
+
+    def play_response_audio(self, response_content):
+        print("⭕️ 开始播放语音...\n\n")
+        print("收到信号的数据类型：", type(response_content))
+        assert isinstance(response_content, bytes), "Response content must be bytes"
+        byte_stream = io.BytesIO(response_content)
+        audio = AudioSegment.from_file(byte_stream, format="mp3")
+        play(audio)
+
+    def submit_user_message(self):
+        user_message = self.user_message.toPlainText()
+
+        self.assistant.chat_with_assistant(user_message, self.assistant.thread_id)
+        # ...对user_message进行处理...
+        print("用户消息：", user_message)  # 示例：打印用户消息
+
+    def finish_reflection(self):
+        self.assistant.save_chatlog(self.assistant.thread_id)
+        self.assistant.generate_report(
+            self.assistant.chatlog_path, self.assistant.report_path
+        )
+        completion_message = "周复盘报告已生成，请到文档区查看「对话记录」与「复盘报告」"
+        self.update_assistant_message(completion_message)
 
 
 if __name__ == "__main__":

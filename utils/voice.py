@@ -20,7 +20,8 @@ from pydub import AudioSegment
 from pydub.playback import play
 import speech_recognition as sr
 from websocket import create_connection, WebSocketConnectionClosedException
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+
 from .settings import get_api_key
 
 # hs_app_id = get_api_key("huoshan_app_id")
@@ -47,9 +48,15 @@ class TextToSpeechThread(QThread):
 
     def run(self):
         response_content = self.minimax_tts(self.text)
-        self.finished_signal.emit(response_content)
+        if isinstance(response_content, bytes):
+            print("发出信号之前确认类型：", type(response_content))
+            self.finished_signal.emit(response_content)
+            print("✅ 确实执行")
+        else:
+            print("Error: Response content is not bytes")
 
     def minimax_tts(self, text):
+        print("⭕️ 正在转换语音...")
         """调用MiniMax API，输入文本，返回语音文件"""
         url = f"https://api.minimax.chat/v1/text_to_speech?GroupId={mm_group_id}"
         headers = {
@@ -65,6 +72,7 @@ class TextToSpeechThread(QThread):
             "pitch": 0,
         }
         response = requests.post(url, headers=headers, json=data)
+        print(response.status_code)
         if response.status_code != 200 or "json" in response.headers["Content-Type"]:
             print("调用失败", response.status_code, response.text)
             return None
@@ -73,6 +81,7 @@ class TextToSpeechThread(QThread):
 
 def play_response_audio(response_content):
     """输入响应内容，播放音频"""
+    print("⭕️ 开始播放语音...\n\n")
     byte_stream = io.BytesIO(response_content)
     audio = AudioSegment.from_file(byte_stream, format="mp3")
     play(audio)
@@ -82,14 +91,16 @@ current_tts_thread = None
 
 
 def transcribe_text_to_speech(text):
-    """创建TextToSpeechThread线程来处理文本到语音转换"""
     global current_tts_thread
     if current_tts_thread is not None and current_tts_thread.isRunning():
-        current_tts_thread.terminate()
+        print("等待上一个TTS线程完成...")
+        current_tts_thread.wait()  # 更安全的等待线程执行完成
 
     current_tts_thread = TextToSpeechThread(text)
+    print(current_tts_thread)
     current_tts_thread.finished_signal.connect(play_response_audio)
     current_tts_thread.start()
+    print("TTS线程启动，文本转换进行中...")
 
 
 """
