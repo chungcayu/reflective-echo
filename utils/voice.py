@@ -1,13 +1,14 @@
 # voice.py
 
 import base64
+import datetime
 import hashlib
 import hmac
+import io
 import json
 import logging
 import os
 import threading
-import json
 import time
 import requests
 from socket import create_connection
@@ -15,17 +16,55 @@ from urllib.parse import quote
 
 import audioop
 import pyaudio
+from pydub import AudioSegment
+from pydub.playback import play
+import speech_recognition as sr
 from websocket import create_connection, WebSocketConnectionClosedException
 
 from .settings import get_api_key
+
+# hs_app_id = get_api_key("huoshan_app_id")
+# hs_access_token = get_api_key("huoshan_access_token")
+# hs_cluster_id = get_api_key("huoshan_cluster_id")
+xf_app_id = get_api_key("xunfei_app_id")
+xf_api_key = get_api_key("xunfei_api_key")
+mm_group_id = get_api_key("minimax_group_id")
+mm_api_key = get_api_key("minimax_api_key")
+
+
+"""
+MiniMax API
+"""
+
+mm_voice_id = "male-qn-qingse"
+
+
+def minimax_tts(text):
+    """调用MiniMax API，输入文本，返回语音文件"""
+    url = f"https://api.minimax.chat/v1/text_to_speech?GroupId={mm_group_id}"
+    headers = {
+        "Authorization": f"Bearer {mm_api_key}",
+        "Content-Type": "application/json",
+    }
+    data = {
+        "voice_id": mm_voice_id,
+        "text": text,
+        "model": "speech-01",
+        "speed": 1.0,
+        "vol": 1.0,
+        "pitch": 0,
+    }
+    response = requests.post(url, headers=headers, json=data)
+    print("trace_id", response.headers.get("Trace-Id"))
+    if response.status_code != 200 or "json" in response.headers["Content-Type"]:
+        print("调用失败", response.status_code, response.text)
+        exit()
+    return response.content
 
 
 """
 火山引擎 API
 """
-hs_app_id = get_api_key("huoshan_app_id")
-hs_access_token = get_api_key("huoshan_access_token")
-hs_cluster_id = get_api_key("huoshan_cluster_id")
 
 # 选择音色：灿灿 2.0：BV700_V2_streaming ｜ 超自然音色-梓梓  BV406_streaming | 超自然音色-梓梓2.0：BV406_V2_streaming ｜ 超自然音色-燃燃2.0：BV407_V2_streaming
 hs_voice_type = "0：BV700_V2_streaming"
@@ -148,8 +187,6 @@ def huoshan_tts(text):
 """
 讯飞 API
 """
-xf_app_id = get_api_key("xunfei_app_id")
-xf_api_key = get_api_key("xunfei_api_key")
 
 
 SILENCE_THRESHOLD = 500  # 设置为合适的静音阈值，这个值可能需要根据实际情况调整
@@ -302,3 +339,35 @@ def xunfei_stt():
     stt_client.start()
     # print("Final transcribed message:", stt_client.user_message)
     return stt_client.user_message
+
+
+def play_local_audio(path):
+    """输入音频本地路径，播放音频"""
+    audio = AudioSegment.from_file(path)
+    play(audio)
+
+
+def play_response_audio(response):
+    """输入响应对象，播放音频"""
+    byte_stream = io.BytesIO(response)
+    audio = AudioSegment.from_file(byte_stream, format="mp3")
+    play(audio)
+
+
+def save_audio(file_path, response):
+    """保存音频到本地"""
+    with open(file_path, "wb") as f:
+        f.write(response.content)
+
+
+def transcribe_text_to_speech(text):
+    # response = huoshan_tts(text)
+    response = minimax_tts(text)
+    # response = openai_tts(text)
+    print("⭕️ 开始播放语音...\n\n")
+    play_response_audio(response)
+
+
+def transcribe_speech_to_text():
+    text = xunfei_stt()
+    return text
