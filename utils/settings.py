@@ -57,9 +57,11 @@ class SettingsDialog(QDialog):
         self.add_api_key_row("OpenAI API Key:", self.grid_layout, 4)
         self.add_api_key_row("Xunfei App ID:", self.grid_layout, 5)
         self.add_api_key_row("Xunfei API Key:", self.grid_layout, 6)
-        self.add_api_key_row("Huoshan App ID:", self.grid_layout, 7)
-        self.add_api_key_row("Huoshan Access Token:", self.grid_layout, 8)
-        self.add_api_key_row("Huoshan Cluster ID:", self.grid_layout, 9)
+        # self.add_api_key_row("Huoshan App ID:", self.grid_layout, 7)
+        # self.add_api_key_row("Huoshan Access Token:", self.grid_layout, 8)
+        # self.add_api_key_row("Huoshan Cluster ID:", self.grid_layout, 9)
+        self.add_api_key_row("MiniMax Group ID:", self.grid_layout, 7)
+        self.add_api_key_row("MiniMax API Key:", self.grid_layout, 8)
 
         # 保存按钮
         self.save_button = QPushButton("保存")
