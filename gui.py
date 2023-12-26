@@ -20,6 +20,7 @@ from PyQt6.QtGui import QDesktopServices, QAction
 from settings_manager import SettingsManager
 from gpt_api_thread import GptApiThread
 from tts_thread import TtsThread
+from stt_thread import SttThread
 
 
 class SettingsDialog(QDialog):
@@ -197,6 +198,7 @@ class ReflectiveEchoUI(QMainWindow):
         # self.settings_manager = SettingsManager()
         self.settings_manager = settings_manager
         self.gpt_api_thread = None
+        self.stt_thread = None
         self.update_assistant_signal.connect(self.actual_update_assistant_message)
 
         self.initUI()
@@ -309,7 +311,7 @@ class ReflectiveEchoUI(QMainWindow):
         self.button_start.clicked.connect(self.on_start_reflection_clicked)
 
         self.button_speak = QPushButton("🎙️")
-        self.button_speak.clicked.connect(self.on_microphone_button_clicked)
+        self.button_speak.clicked.connect(self.on_mic_button_clicked)
 
         self.button_submit = QPushButton("⌨️")
         self.button_submit.clicked.connect(self.on_keyboard_button_clicked)
@@ -379,8 +381,16 @@ class ReflectiveEchoUI(QMainWindow):
         if self.gpt_api_thread:
             self.gpt_api_thread.new_user_message_signal.emit(user_message)
 
-    def on_microphone_button_clicked(self):
-        pass
+    def on_mic_button_clicked(self):
+        # # 获取讯飞 API 的配置
+        # xf_app_id = self.settings_manager.get_setting("xf_app_id")
+        # xf_api_key = self.settings_manager.get_setting("xf_api_key")
+
+        # 创建并启动 STT 线程
+        if not self.stt_thread or not self.stt_thread.isRunning():
+            self.stt_thread = SttThread()
+            self.stt_thread.text_updated_signal.connect(self.update_user_message)
+            self.stt_thread.start()
 
     def on_finish_reflection_clicked(self):
         if self.gpt_api_thread:
@@ -396,9 +406,15 @@ class ReflectiveEchoUI(QMainWindow):
         # 发射信号以更新助手消息
         self.update_assistant_signal.emit(message)
 
-    def update_user_message(self, message):
-        # Update the user message in the UI
-        self.user_message.setText(message)
+    # def update_user_message(self, message):
+    #     # Update the user message in the UI
+    #     self.user_message.setText(message)
+
+    def update_user_message(self, new_text):
+        # 将新识别的文本添加到文本框现有内容的末尾
+        current_text = self.user_message.toPlainText()
+        updated_text = current_text + new_text
+        self.user_message.setText(updated_text)
 
     # ... (Other UI related methods like openSettingsDialog, showSavePath, etc.)
     def openSettingsDialog(self):
