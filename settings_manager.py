@@ -1,12 +1,19 @@
 import os
 import json
+import platform
 from cryptography.fernet import Fernet, InvalidToken
 
 
 class APIKeyManager:
-    def __init__(self, key_path="./data/secret.key"):
+    def __init__(self, key_path=None):
+        if key_path is None:
+            key_path = self.get_default_key_path()
         self.key_path = key_path
         self.key = self.load_key()
+
+    def get_default_key_path(self):
+        app_data_dir = self.get_app_data_dir()
+        return os.path.join(app_data_dir, "secret.key")
 
     def generate_key(self):
         key = Fernet.generate_key()
@@ -35,24 +42,50 @@ class APIKeyManager:
             print(f"Error decrypting API key: {e}")
         return ""
 
+    def get_app_data_dir(self):
+        if platform.system() == "Windows":
+            config_dir = os.path.join(
+                os.path.expanduser("~"), "AppData", "Roaming", "ReflectiveEcho"
+            )
+        elif platform.system() == "Darwin":
+            config_dir = os.path.join(
+                os.path.expanduser("~"),
+                "Library",
+                "Application Support",
+                "ReflectiveEcho",
+            )
+        else:
+            config_dir = os.path.join(os.path.expanduser("~"), ".ReflectiveEcho")
+
+        if not os.path.exists(config_dir):
+            os.makedirs(config_dir)
+        return config_dir
+
 
 class SettingsManager:
-    def __init__(self, config_path="settings.json", key_manager=None):
+    def __init__(self, config_path=None, key_manager=None):
+        self.key_manager = APIKeyManager()
+        if config_path is None:
+            config_path = self.get_default_config_path()
         self.config_path = config_path
-        self.key_manager = key_manager or APIKeyManager()
+        self.key_manager = APIKeyManager()
         self.settings = self.load_settings()
+
+    def get_default_config_path(self):
+        app_data_dir = self.key_manager.get_app_data_dir()
+        return os.path.join(app_data_dir, "settings.json")
 
     def load_settings(self):
         try:
             with open(self.config_path, "r") as config_file:
                 encrypted_settings = json.load(config_file)
-                # Decrypt settings after loading
-                return {
+                settings = {
                     key: self.key_manager.decrypt_api_key(value)
                     for key, value in encrypted_settings.items()
                 }
+                print("Settings loaded:", settings)
+                return settings
         except FileNotFoundError:
-            print(f"Settings file not found: {self.config_path}")
             return {}
 
     def save_settings(self, new_settings):
@@ -70,10 +103,3 @@ class SettingsManager:
     def update_setting(self, key, value):
         self.settings[key] = value
         self.save_settings(self.settings)
-
-
-# Example usage:
-if __name__ == "__main__":
-    settings_manager = SettingsManager()
-    settings_manager.update_setting("some_api_key", "some_api_key_value")
-    print(settings_manager.get_setting("some_api_key"))
