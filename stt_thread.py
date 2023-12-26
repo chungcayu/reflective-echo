@@ -12,8 +12,8 @@ import threading
 
 from settings_manager import SettingsManager
 
-SILENCE_THRESHOLD = 2000  # 调整该值以识别静音
-SILENCE_TIME_LIMIT = 2  # 静音时间超过该值（秒）时，停止录音
+SILENCE_THRESHOLD = 500  # 调整该值以识别静音
+SILENCE_TIME_LIMIT = 3  # 静音时间超过该值（秒）时，停止录音
 
 
 class SttThread(QThread):

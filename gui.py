@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
     QLabel,
 )
 from PyQt6.QtCore import pyqtSignal, Qt, QUrl, QTimer
-from PyQt6.QtGui import QDesktopServices, QAction
+from PyQt6.QtGui import QDesktopServices, QAction, QTextCursor
 
 from settings_manager import SettingsManager
 from gpt_api_thread import GptApiThread
@@ -107,6 +107,7 @@ class SettingsDialog(QDialog):
 
     def load_settings(self):
         # Load current settings into the dialog fields
+        self.user_text.setText(self.settings_manager.get_setting("user_name") or "")
         self.save_location_text.setText(
             self.settings_manager.get_setting("save_location") or ""
         )
@@ -415,6 +416,8 @@ class ReflectiveEchoUI(QMainWindow):
         current_text = self.user_message.toPlainText()
         updated_text = current_text + new_text
         self.user_message.setText(updated_text)
+
+        self.user_message.moveCursor(QTextCursor.MoveOperation.End)
 
     # ... (Other UI related methods like openSettingsDialog, showSavePath, etc.)
     def openSettingsDialog(self):
