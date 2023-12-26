@@ -207,8 +207,10 @@ poetry.toml
 pyrightconfig.json
 
 ### Other ###
+archive/*
 backend/data/*
 data/*
 secret.key
+settings.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,macos
