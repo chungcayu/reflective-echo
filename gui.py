@@ -314,7 +314,7 @@ class ReflectiveEchoUI(QMainWindow):
         self.button_submit.clicked.connect(self.on_keyboard_button_clicked)
 
         self.button_finish = QPushButton("结束复盘")
-        self.button_finish.clicked.connect(self.finish_reflection)
+        self.button_finish.clicked.connect(self.on_finish_reflection_clicked)
 
         self.button_layout.addWidget(self.button_start)
         self.button_layout.addWidget(self.button_speak)
@@ -346,6 +346,9 @@ class ReflectiveEchoUI(QMainWindow):
         if not self.gpt_api_thread:
             self.gpt_api_thread = GptApiThread(user_name)
             self.gpt_api_thread.response_signal.connect(self.handle_gpt_response)
+            self.gpt_api_thread.update_message_signal.connect(
+                self.update_assistant_message
+            )
             self.gpt_api_thread.start()
 
     def handle_gpt_response(self, response):
@@ -371,9 +374,10 @@ class ReflectiveEchoUI(QMainWindow):
         # This would emit a signal to start/stop STT
         self.start_stt_signal.emit()
 
-    def finish_reflection(self):
-        # This would emit a signal to finish the session and trigger report generation
-        self.finish_session_signal.emit()
+    def on_finish_reflection_clicked(self):
+        if self.gpt_api_thread:
+            chatlog_path = self.gpt_api_thread.save_chatlog()
+            self.gpt_api_thread.generate_report(chatlog_path)
 
     def actual_update_assistant_message(self, message):
         # 实际更新UI的方法

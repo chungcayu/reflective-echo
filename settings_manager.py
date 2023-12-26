@@ -1,6 +1,6 @@
 import os
 import json
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 
 
 class APIKeyManager:
@@ -16,7 +16,8 @@ class APIKeyManager:
     def load_key(self):
         if not os.path.exists(self.key_path):
             self.generate_key()
-        return open(self.key_path, "rb").read()
+        with open(self.key_path, "rb") as key_file:
+            return key_file.read()
 
     def encrypt_api_key(self, api_key):
         f = Fernet(self.key)
@@ -28,7 +29,7 @@ class APIKeyManager:
             return f.decrypt(encrypted_api_key.encode()).decode()
         except FileNotFoundError:
             print(f"Encrypted API key file not found: {encrypted_api_key}")
-        except Fernet.InvalidToken:
+        except InvalidToken:
             print(f"Invalid key - decryption failed for API key.")
         except Exception as e:
             print(f"Error decrypting API key: {e}")
@@ -51,6 +52,7 @@ class SettingsManager:
                     for key, value in encrypted_settings.items()
                 }
         except FileNotFoundError:
+            print(f"Settings file not found: {self.config_path}")
             return {}
 
     def save_settings(self, new_settings):

@@ -1,20 +1,21 @@
 # gpt_api_thread.py
 
+import datetime
+import time
 from openai import OpenAI
 from PyQt6.QtCore import QThread, pyqtSignal
 from settings_manager import SettingsManager
-import time
 
 
 class GptApiThread(QThread):
     response_signal = pyqtSignal(str)
-    # start_processing_signal = pyqtSignal(str)
     new_user_message_signal = pyqtSignal(str)
+    update_message_signal = pyqtSignal(str)
 
     def __init__(self, user_name):
         super().__init__()
-        settings_manager = SettingsManager()
-        openai_api_key = settings_manager.get_setting("openai_api_key")
+        self.settings_manager = SettingsManager()
+        openai_api_key = self.settings_manager.get_setting("openai_api_key")
         self.client = OpenAI(api_key=openai_api_key)
 
         self.assistant_id = "asst_40vLVijSiJ0cRONnIFPOaeas"
@@ -63,6 +64,17 @@ class GptApiThread(QThread):
         )
         return messages.data
 
+    def generate_text_from_oai(self, system_prompt, user_message):
+        response = self.client.chat.completions.create(
+            model="gpt-3.5-turbo-1106",  # gpt-3.5-turbo-1106 | gpt-4-1106-preview
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+            temperature=0.5,
+        )
+        return response.choices[0].message.content
+
     def initialize_session(self):
         # 初始化会话
         user_message = f"用户称呼：{self.user_name}"
@@ -92,3 +104,59 @@ class GptApiThread(QThread):
 
             # 发出带有API响应的信号
             self.response_signal.emit(response)
+
+    def generate_file_title(self, file_type):
+        self.save_location = self.settings_manager.get_setting("save_location")
+        today = datetime.datetime.now()
+        self.year_number = today.isocalendar()[0]
+        self.week_number = today.isocalendar()[1]
+        self.timestamp = today.strftime("%Y%m%d%H%M%S")
+        self.title = f"{self.save_location}/{self.timestamp}-{self.year_number}w{self.week_number}-{file_type}.md"
+        return self.title, self.year_number, self.week_number
+
+    def save_chatlog(self):
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        chatlog_path, year, week = self.generate_file_title("chatlog")
+        messages = self.retrieve_message_list(self.thread_id)[:-1]
+        messages = reversed(messages)
+        with open(chatlog_path, "a") as f:
+            f.write(f"# {year}w{week} Weekly Review 对话记录\n\n")
+            for i in messages:
+                role = i.role
+                text = i.content[0].text.value
+                if role == "assistant":
+                    f.write(f"**Echo**: {text}\n\n")
+                else:
+                    f.write(f"**{self.user_name}**: {text}\n\n")
+            f.write("---\n\n")
+            f.write("## Chagnelog\n\n")
+            f.write(f"- {timestamp} 生成对话记录\n\n")
+        self.update_message_signal.emit("✅ 对话记录已保存，正在生成周复盘报告...")
+        return chatlog_path
+
+    def generate_report(self, chatlog_path):
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        report_path, year, week = self.generate_file_title("report")
+
+        system_prompt = """
+            你是一个复盘报告写作专家。你需要根据一份对话记录，撰写一份周复盘报告。在这份报告中，你需要包含以下内容：
+            1. 本周发生的重要事件
+            2. 本周获得的最大成就
+            3. 本周遇到的最大挑战
+            4. 对话中十大高频词
+            5. 本周的情绪状态
+            6. 下周计划
+        """
+
+        with open(chatlog_path, "r") as f:
+            user_message = f.read()
+
+        response = self.generate_text_from_oai(system_prompt, user_message)
+
+        with open(report_path, "w") as f:
+            f.write(f"# {year}w{week} Weekly Review 复盘报告\n\n")
+            f.write(response)
+            f.write("---\n\n")
+            f.write("## Changelog\n\n")
+            f.write(f"- {timestamp} GPT-4 基于对话记录生成复盘报告\n\n")
+        self.update_message_signal.emit("✅ 本周复盘报告已生成")
