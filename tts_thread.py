@@ -13,9 +13,8 @@ class TtsThread(QThread):
     def __init__(self, text):
         super().__init__()
         self.settings_manager = SettingsManager()
-        self.mm_group_id = self.settings_manager.get_setting("mm_group_id")
-        self.mm_api_key = self.settings_manager.get_setting("mm_api_key")
-        self.mm_voice_id = self.settings_manager.get_setting("mm_voice_id")
+        self.mm_group_id = self.settings_manager.get_setting("minimax_group_id")
+        self.mm_api_key = self.settings_manager.get_setting("minimax_api_key")
 
         self.text = text
 
@@ -38,7 +37,7 @@ class TtsThread(QThread):
             "Content-Type": "application/json",
         }
         data = {
-            "voice_id": self.mm_voice_id,
+            "voice_id": "male-qn-qingse",
             "text": text,
             "model": "speech-01",
             "speed": 1.0,

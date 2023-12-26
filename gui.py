@@ -19,6 +19,7 @@ from PyQt6.QtGui import QDesktopServices, QAction
 
 from settings_manager import SettingsManager
 from gpt_api_thread import GptApiThread
+from tts_thread import TtsThread
 
 
 class SettingsDialog(QDialog):
@@ -308,7 +309,7 @@ class ReflectiveEchoUI(QMainWindow):
         self.button_start.clicked.connect(self.on_start_reflection_clicked)
 
         self.button_speak = QPushButton("🎙️")
-        self.button_speak.clicked.connect(self.toggle_speech_to_text)
+        self.button_speak.clicked.connect(self.on_microphone_button_clicked)
 
         self.button_submit = QPushButton("⌨️")
         self.button_submit.clicked.connect(self.on_keyboard_button_clicked)
@@ -353,7 +354,15 @@ class ReflectiveEchoUI(QMainWindow):
 
     def handle_gpt_response(self, response):
         # 处理从GPT API获得的响应
-        self.update_assistant_message(response)
+        self.current_gpt_response = response
+        self.tts_thread = TtsThread(response)
+        self.tts_thread.finished_signal.connect(self.on_tts_finished)
+        self.tts_thread.start()
+
+        # self.update_assistant_message(response)
+
+    def on_tts_finished(self):
+        self.update_assistant_message(self.current_gpt_response)
 
     def on_keyboard_button_clicked(self):
         """
@@ -370,9 +379,8 @@ class ReflectiveEchoUI(QMainWindow):
         if self.gpt_api_thread:
             self.gpt_api_thread.new_user_message_signal.emit(user_message)
 
-    def toggle_speech_to_text(self):
-        # This would emit a signal to start/stop STT
-        self.start_stt_signal.emit()
+    def on_microphone_button_clicked(self):
+        pass
 
     def on_finish_reflection_clicked(self):
         if self.gpt_api_thread:
