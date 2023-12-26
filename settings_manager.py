@@ -83,9 +83,9 @@ class SettingsManager:
                     key: self.key_manager.decrypt_api_key(value)
                     for key, value in encrypted_settings.items()
                 }
-                print("Settings loaded:", settings)
                 return settings
         except FileNotFoundError:
+            print(f"Settings file not found: {self.config_path}")
             return {}
 
     def save_settings(self, new_settings):

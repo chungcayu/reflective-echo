@@ -131,7 +131,6 @@ class GptApiThread(QThread):
             f.write("---\n\n")
             f.write("## Chagnelog\n\n")
             f.write(f"- {timestamp} 生成对话记录\n\n")
-        self.update_message_signal.emit("✅ 对话记录已保存，正在生成周复盘报告...")
         return chatlog_path
 
     def generate_report(self, chatlog_path):

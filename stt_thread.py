@@ -101,7 +101,7 @@ class STTClient:
             frames_per_buffer=chunk,
         )
 
-        print("----> 导师正在倾听，请讲述你的想法\n\n")
+        print("⭕️ 正在录音...")
 
         last_sound_detected_time = time.time()  # 初始化最后声音检测时间
 
@@ -114,7 +114,7 @@ class STTClient:
                 current_time = time.time()
                 if current_time - last_sound_detected_time > SILENCE_TIME_LIMIT:
                     # print(f"\n静音时间超过{SILENCE_TIME_LIMIT}秒，停止录音")
-                    print("\n\n----> 导师正在思考，请稍等\n\n")
+                    print("⭕️ 正在识别...")
                     break  # 静音超过了设定的阈值，退出循环，结束发送音频数据
             else:
                 last_sound_detected_time = time.time()  # 如果检测到声音，更新最后的声音检测时间
