@@ -37,10 +37,10 @@ class TtsThread(QThread):
             "Content-Type": "application/json",
         }
         data = {
-            "voice_id": "male-qn-qingse",
+            "voice_id": "male-qn-jingying",
             "text": text,
             "model": "speech-01",
-            "speed": 1.0,
+            "speed": 1,
             "vol": 1.0,
             "pitch": 0,
         }
@@ -56,6 +56,6 @@ class TtsThread(QThread):
 
     def play_audio(self, audio_data):
         """播放音频数据"""
-        print("⭕️ 开始播放语音...\n\n")
+        print("⭕️ 开始播放语音...")
         audio_segment = AudioSegment.from_file(io.BytesIO(audio_data), format="mp3")
         play(audio_segment)
