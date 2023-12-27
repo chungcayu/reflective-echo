@@ -436,4 +436,8 @@ class ReflectiveEchoUI(QMainWindow):
         QDesktopServices.openUrl(QUrl("https://github.com/chungcayu/reflective-echo"))
 
     def showHelpInfo(self):
-        QDesktopServices.openUrl(QUrl("https://github.com/chungcayu/reflective-echo"))
+        QDesktopServices.openUrl(
+            QUrl(
+                "https://github.com/chungcayu/reflective-echo/blob/main/quick-start.md"
+            )
+        )
