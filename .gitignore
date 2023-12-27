@@ -214,5 +214,7 @@ settings.json
 secret.key
 app/secret.key
 app/settings.json
+demo.py
+minimax_response.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,macos

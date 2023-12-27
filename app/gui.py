@@ -211,6 +211,9 @@ class ReflectiveEchoUI(QMainWindow):
         self.stt_thread = None
         self.update_assistant_signal.connect(self.actual_update_assistant_message)
 
+        self.tts_thread = TtsThread()
+        self.tts_thread.errorOccurred.connect(self.handle_tts_error)
+
         self.initUI()
 
     def initUI(self):
@@ -500,3 +503,6 @@ class ReflectiveEchoUI(QMainWindow):
                 "https://github.com/chungcayu/reflective-echo/blob/main/quick-start.md"
             )
         )
+
+    def handle_tts_error(self, title, message):
+        QMessageBox.critical(self, title, message)
