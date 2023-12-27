@@ -109,3 +109,19 @@ class SettingsManager:
             "minimax_group_id": "",
             "minimax_api_key": "",
         }
+
+    def isSettingsFilled(self):
+        # 定义必要的设置项
+        required_settings = [
+            "openai_api_key",
+            "xunfei_app_id",
+            "xunfei_api_key",
+            "minimax_group_id",
+            "minimax_api_key",
+        ]
+
+        # 确保所有必要的设置都已被填写
+        for key in required_settings:
+            if not self.get_setting(key):
+                return False
+        return True

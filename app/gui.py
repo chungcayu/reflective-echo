@@ -351,18 +351,38 @@ class ReflectiveEchoUI(QMainWindow):
         """
         当“开始复盘”按钮被点击时调用此方法。
         """
-        # 更新助手窗口的消息
-        self.update_assistant_message("准备复盘...")
-        user_name = self.settings_manager.get_setting("user_name")
+        if not self.settings_manager.isSettingsFilled():
+            # 如果没有设置，则打开设置对话框
+            self.promptForSetting()
+            return
+        else:
+            # 更新助手窗口的消息
+            self.update_assistant_message("准备复盘...")
+            user_name = self.settings_manager.get_setting("user_name")
 
-        # 创建并启动 GPT API 通信线程
-        if not self.gpt_api_thread:
-            self.gpt_api_thread = GptApiThread(user_name)
-            self.gpt_api_thread.response_signal.connect(self.handle_gpt_response)
-            self.gpt_api_thread.update_message_signal.connect(
-                self.update_assistant_message
-            )
-            self.gpt_api_thread.start()
+            # 创建并启动 GPT API 通信线程
+            if not self.gpt_api_thread:
+                self.gpt_api_thread = GptApiThread(user_name)
+                self.gpt_api_thread.response_signal.connect(self.handle_gpt_response)
+                self.gpt_api_thread.update_message_signal.connect(
+                    self.update_assistant_message
+                )
+                self.gpt_api_thread.start()
+
+    def promptForSetting(self):
+        msgBox = QMessageBox()
+        customIcon = QPixmap("../assets/reflective-echo-logo.png")
+        msgBox.setIconPixmap(
+            customIcon.scaled(50, 50, Qt.AspectRatioMode.KeepAspectRatio)
+        )
+        msgBox.setText("未填写设置信息，是否打开设置？")
+        msgBox.setStandardButtons(
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        reply = msgBox.exec()
+
+        if reply == QMessageBox.StandardButton.Yes:
+            self.openSettingsDialog()
 
     def handle_gpt_response(self, response):
         # 处理从GPT API获得的响应
@@ -444,9 +464,9 @@ class ReflectiveEchoUI(QMainWindow):
                 subprocess.Popen(["xdg-open", save_location])
         else:
             # 处理没有设置保存路径的情况
-            self.promptForSetting()
+            self.promptForSettingSavePath()
 
-    def promptForSetting(self):
+    def promptForSettingSavePath(self):
         msgBox = QMessageBox()
         customIcon = QPixmap("../assets/reflective-echo-logo.png")
         msgBox.setIconPixmap(
@@ -457,14 +477,6 @@ class ReflectiveEchoUI(QMainWindow):
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         reply = msgBox.exec()
-
-        # reply = QMessageBox.question(
-        #     self,
-        #     "设置提醒",
-        #     "未设置保存路径，是否打开设置？",
-        #     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        #     QMessageBox.StandardButton.Yes,
-        # )
 
         if reply == QMessageBox.StandardButton.Yes:
             self.openSettingsDialog()
