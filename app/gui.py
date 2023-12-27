@@ -1,3 +1,7 @@
+import os
+import platform
+
+import subprocess
 from PyQt6.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -430,7 +434,37 @@ class ReflectiveEchoUI(QMainWindow):
         settings_dialog.exec()
 
     def showSavePath(self):
-        pass
+        save_location = self.settings_manager.get_setting("save_location")
+        if save_location:
+            if platform.system() == "Windows":
+                os.startfile(save_location)
+            elif platform.system() == "Darwin":  # macOS
+                subprocess.Popen(["open", save_location])
+            else:  # Linux and other OS
+                subprocess.Popen(["xdg-open", save_location])
+        else:
+            # 处理没有设置保存路径的情况
+            self.promptForSetting()
+
+    def promptForSetting(self):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Icon.Information)
+        msgBox.setText("未设置保存路径，是否打开设置？")
+        msgBox.setStandardButtons(
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        reply = msgBox.exec()
+
+        # reply = QMessageBox.question(
+        #     self,
+        #     "设置提醒",
+        #     "未设置保存路径，是否打开设置？",
+        #     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        #     QMessageBox.StandardButton.Yes,
+        # )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            self.openSettingsDialog()
 
     def showAboutInfo(self):
         QDesktopServices.openUrl(QUrl("https://github.com/chungcayu/reflective-echo"))

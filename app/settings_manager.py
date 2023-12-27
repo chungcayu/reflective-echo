@@ -2,6 +2,7 @@ import os
 import json
 import platform
 import sys
+
 from cryptography.fernet import Fernet, InvalidToken
 
 
