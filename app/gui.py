@@ -19,7 +19,7 @@ from PyQt6.QtWidgets import (
     QLabel,
 )
 from PyQt6.QtCore import pyqtSignal, Qt, QUrl, QTimer
-from PyQt6.QtGui import QDesktopServices, QAction, QTextCursor
+from PyQt6.QtGui import QDesktopServices, QAction, QTextCursor, QPixmap
 
 from settings_manager import SettingsManager
 from gpt_api_thread import GptApiThread
@@ -448,7 +448,10 @@ class ReflectiveEchoUI(QMainWindow):
 
     def promptForSetting(self):
         msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Icon.Information)
+        customIcon = QPixmap("../assets/reflective-echo-logo.png")
+        msgBox.setIconPixmap(
+            customIcon.scaled(50, 50, Qt.AspectRatioMode.KeepAspectRatio)
+        )
         msgBox.setText("未设置保存路径，是否打开设置？")
         msgBox.setStandardButtons(
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
