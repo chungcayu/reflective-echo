@@ -86,6 +86,7 @@ class GptApiThread(QThread):
 
     def chat_with_assistant(self, user_message):
         # 与助手对话的代码
+        print("⭕️ 正在调用OpenAI API...")
         self.user_message = user_message
         self.create_message(self.user_message, self.thread_id)
         self.run_id = self.run_thread(self.thread_id, self.assistant_id)
@@ -145,6 +146,7 @@ class GptApiThread(QThread):
             4. 对话中十大高频词
             5. 本周的情绪状态
             6. 下周计划
+            不需要写一级标题，只需要写二级标题即可。
         """
 
         with open(chatlog_path, "r") as f:

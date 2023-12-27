@@ -114,7 +114,7 @@ class STTClient:
                 current_time = time.time()
                 if current_time - last_sound_detected_time > SILENCE_TIME_LIMIT:
                     # print(f"\n静音时间超过{SILENCE_TIME_LIMIT}秒，停止录音")
-                    print("⭕️ 正在识别...")
+                    print("⭕️ 停止录音...")
                     break  # 静音超过了设定的阈值，退出循环，结束发送音频数据
             else:
                 last_sound_detected_time = time.time()  # 如果检测到声音，更新最后的声音检测时间

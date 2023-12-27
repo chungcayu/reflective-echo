@@ -1,6 +1,7 @@
 import os
 import json
 import platform
+import sys
 from cryptography.fernet import Fernet, InvalidToken
 
 
@@ -43,32 +44,23 @@ class APIKeyManager:
         return ""
 
     def get_app_data_dir(self):
-        if platform.system() == "Windows":
-            config_dir = os.path.join(
-                os.path.expanduser("~"), "AppData", "Roaming", "ReflectiveEcho"
-            )
-        elif platform.system() == "Darwin":
-            config_dir = os.path.join(
-                os.path.expanduser("~"),
-                "Library",
-                "Application Support",
-                "ReflectiveEcho",
-            )
+        if getattr(sys, "frozen", False):
+            # 应用程序是打包后运行的
+            config_dir = os.path.dirname(sys.executable)
         else:
-            config_dir = os.path.join(os.path.expanduser("~"), ".ReflectiveEcho")
+            # 应用程序在开发环境中运行
+            config_dir = os.path.dirname(os.path.abspath(__file__))
 
-        if not os.path.exists(config_dir):
-            os.makedirs(config_dir)
         return config_dir
 
 
 class SettingsManager:
     def __init__(self, config_path=None, key_manager=None):
         self.key_manager = APIKeyManager()
-        if config_path is None:
-            config_path = self.get_default_config_path()
-        self.config_path = config_path
-        self.key_manager = APIKeyManager()
+        # if config_path is None:
+        #     config_path = self.get_default_config_path()
+        # self.config_path = config_path
+        self.config_path = config_path or self.get_default_config_path()
         self.settings = self.load_settings()
 
     def get_default_config_path(self):
@@ -76,17 +68,17 @@ class SettingsManager:
         return os.path.join(app_data_dir, "settings.json")
 
     def load_settings(self):
-        try:
-            with open(self.config_path, "r") as config_file:
-                encrypted_settings = json.load(config_file)
-                settings = {
-                    key: self.key_manager.decrypt_api_key(value)
-                    for key, value in encrypted_settings.items()
-                }
-                return settings
-        except FileNotFoundError:
-            print(f"Settings file not found: {self.config_path}")
-            return {}
+        if not os.path.exists(self.config_path):
+            # 如果配置文件不存在，创建一个默认配置
+            self.save_settings(self.default_settings)
+            return self.default_settings
+        with open(self.config_path, "r") as config_file:
+            encrypted_settings = json.load(config_file)
+            settings = {
+                key: self.key_manager.decrypt_api_key(value)
+                for key, value in encrypted_settings.items()
+            }
+            return settings
 
     def save_settings(self, new_settings):
         # Encrypt settings before saving
@@ -103,3 +95,16 @@ class SettingsManager:
     def update_setting(self, key, value):
         self.settings[key] = value
         self.save_settings(self.settings)
+
+    @property
+    def default_settings(self):
+        # 默认设置可以根据您的需要进行调整
+        return {
+            "user_name": "游客",
+            "save_location": "",
+            "openai_api_key": "",
+            "xunfei_app_id": "",
+            "xunfei_api_key": "",
+            "minimax_group_id": "",
+            "minimax_api_key": "",
+        }
