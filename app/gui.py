@@ -19,7 +19,7 @@ from PyQt6.QtWidgets import (
     QLabel,
 )
 from PyQt6.QtCore import pyqtSignal, Qt, QUrl, QTimer
-from PyQt6.QtGui import QDesktopServices, QAction, QTextCursor, QPixmap
+from PyQt6.QtGui import QDesktopServices, QAction, QTextCursor, QPixmap, QCursor
 
 from settings_manager import SettingsManager
 from gpt_api_thread import GptApiThread
@@ -244,16 +244,6 @@ class ReflectiveEchoUI(QMainWindow):
         helpAction.triggered.connect(self.showHelpInfo)
         helpMenu.addAction(helpAction)
 
-        button_style = (
-            "QPushButton {"
-            "   width: 80px;"  # 设置宽度
-            "   height: 30px;"  # 设置高度
-            "   border: 1px solid gray;"
-            "   border-radius: 5px;"  # 设置圆角
-            "   background-color: gray;"  # 可选的背景颜色
-            "}"
-        )
-
         # Main layout
         self.display_layout = QVBoxLayout()
         self.display_layout.setSpacing(
@@ -317,16 +307,36 @@ class ReflectiveEchoUI(QMainWindow):
             Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight
         )
 
+        button_style = (
+            "QPushButton {"
+            "   width: 80px;"  # 设置宽度
+            "   height: 30px;"  # 设置高度
+            "   border: 1px solid gray;"
+            "   border-radius: 5px;"  # 设置圆角
+            "   background-color: gray;"  # 可选的背景颜色
+            "}"
+            "QPushButton:hover {"
+            "   background-color: silver;"  # 悬停时的背景颜色
+            "}"
+            "QPushButton:pressed {"
+            "   background-color: #A9A9A9;"  # 按下时的背景颜色
+            "}"
+        )
+
         self.button_start = QPushButton("开始复盘")
+        self.button_start.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.button_start.clicked.connect(self.on_start_reflection_clicked)
 
         self.button_speak = QPushButton("🎙️")
+        self.button_speak.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.button_speak.clicked.connect(self.on_mic_button_clicked)
 
         self.button_submit = QPushButton("⌨️")
+        self.button_submit.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.button_submit.clicked.connect(self.on_keyboard_button_clicked)
 
         self.button_finish = QPushButton("结束复盘")
+        self.button_finish.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.button_finish.clicked.connect(self.on_finish_reflection_clicked)
 
         self.button_layout.addWidget(self.button_start)
