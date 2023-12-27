@@ -2,6 +2,7 @@
 
 import datetime
 import time
+import openai
 from openai import OpenAI
 from PyQt6.QtCore import QThread, pyqtSignal
 from settings_manager import SettingsManager
@@ -30,50 +31,110 @@ class GptApiThread(QThread):
 
     # Create a thread
     def create_thread(self):
-        thread = self.client.beta.threads.create()
-        return thread.id
+        try:
+            thread = self.client.beta.threads.create()
+            return thread.id
+        except openai.APIConnectionError:
+            print("无法连接到服务器，请检查网络连接。")
+        except openai.RateLimitError:
+            print("已达到速率限制，请稍后再试。")
+        except openai.APIStatusError as e:
+            print("接口返回非成功状态码:", e.status_code)
+        except openai.APIError:
+            print("发生了一个 OpenAI API 错误。")
+        return None
 
     # Creata a message
     def create_message(self, prompt, thread_id):
-        message = self.client.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="user",
-            content=prompt,
-        )
-        return message
+        try:
+            message = self.client.beta.threads.messages.create(
+                thread_id=thread_id,
+                role="user",
+                content=prompt,
+            )
+            return message
+        except openai.APIConnectionError:
+            print("无法连接到服务器，请检查网络连接。")
+        except openai.RateLimitError:
+            print("已达到速率限制，请稍后再试。")
+        except openai.APIStatusError as e:
+            print("接口返回非成功状态码:", e.status_code)
+        except openai.APIError:
+            print("发生了一个 OpenAI API 错误。")
+        return None
 
     # Run the assistant
     def run_thread(self, thread_id, assistant_id):
-        run = self.client.beta.threads.runs.create(
-            thread_id=thread_id,
-            assistant_id=assistant_id,
-        )
-        return run.id
+        try:
+            run = self.client.beta.threads.runs.create(
+                thread_id=thread_id,
+                assistant_id=assistant_id,
+            )
+            return run.id
+        except openai.APIConnectionError:
+            print("无法连接到服务器，请检查网络连接。")
+        except openai.RateLimitError:
+            print("已达到速率限制，请稍后再试。")
+        except openai.APIStatusError as e:
+            print("接口返回非成功状态码:", e.status_code)
+        except openai.APIError:
+            print("发生了一个 OpenAI API 错误。")
+        return None
 
     # Check the status of the run
     def check_run_status(self, thread_id, run_id):
-        run_list = self.client.beta.threads.runs.retrieve(
-            thread_id=thread_id,
-            run_id=run_id,
-        )
-        return run_list.status
+        try:
+            run_list = self.client.beta.threads.runs.retrieve(
+                thread_id=thread_id,
+                run_id=run_id,
+            )
+            return run_list.status
+        except openai.APIConnectionError:
+            print("无法连接到服务器，请检查网络连接。")
+        except openai.RateLimitError:
+            print("已达到速率限制，请稍后再试。")
+        except openai.APIStatusError as e:
+            print("接口返回非成功状态码:", e.status_code)
+        except openai.APIError:
+            print("发生了一个 OpenAI API 错误。")
+        return None
 
     def retrieve_message_list(self, thread_id):
-        messages = self.client.beta.threads.messages.list(
-            thread_id=thread_id,
-        )
-        return messages.data
+        try:
+            messages = self.client.beta.threads.messages.list(
+                thread_id=thread_id,
+            )
+            return messages.data
+        except openai.APIConnectionError:
+            print("无法连接到服务器，请检查网络连接。")
+        except openai.RateLimitError:
+            print("已达到速率限制，请稍后再试。")
+        except openai.APIStatusError as e:
+            print("接口返回非成功状态码:", e.status_code)
+        except openai.APIError:
+            print("发生了一个 OpenAI API 错误。")
+        return None
 
     def generate_text_from_oai(self, system_prompt, user_message):
-        response = self.client.chat.completions.create(
-            model="gpt-3.5-turbo-1106",  # gpt-3.5-turbo-1106 | gpt-4-1106-preview
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ],
-            temperature=0.5,
-        )
-        return response.choices[0].message.content
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-3.5-turbo-1106",  # gpt-3.5-turbo-1106 | gpt-4-1106-preview
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message},
+                ],
+                temperature=0.5,
+            )
+            return response.choices[0].message.content
+        except openai.APIConnectionError:
+            print("无法连接到服务器，请检查网络连接。")
+        except openai.RateLimitError:
+            print("已达到速率限制，请稍后再试。")
+        except openai.APIStatusError as e:
+            print("接口返回非成功状态码:", e.status_code)
+        except openai.APIError:
+            print("发生了一个 OpenAI API 错误。")
+        return None
 
     def initialize_session(self):
         # 初始化会话

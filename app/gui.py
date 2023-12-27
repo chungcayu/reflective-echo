@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QLabel,
 )
-from PyQt6.QtCore import pyqtSignal, Qt, QUrl, QTimer
+from PyQt6.QtCore import pyqtSignal, Qt, QUrl, QTimer, QThread
 from PyQt6.QtGui import QDesktopServices, QAction, QTextCursor, QPixmap, QCursor
 
 from settings_manager import SettingsManager
@@ -211,7 +211,7 @@ class ReflectiveEchoUI(QMainWindow):
         self.stt_thread = None
         self.update_assistant_signal.connect(self.actual_update_assistant_message)
 
-        self.tts_thread = TtsThread()
+        self.tts_thread = TtsThread(QThread)
         self.tts_thread.errorOccurred.connect(self.handle_tts_error)
 
         self.initUI()
