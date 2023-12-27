@@ -413,11 +413,16 @@ class ReflectiveEchoUI(QMainWindow):
         """
         当“键盘”按钮被点击时调用此方法。
         """
+        # 从文本框获取用户输入
+        user_message = self.user_message.toPlainText()
+        # 检查文本框是否为空
+        if not user_message.strip():  # 使用 .strip() 移除可能的空白字符
+            QMessageBox.warning(self, "提示", "输入内容不能为空")
+            return
         # 更新助手窗口的消息为“Echo正在思考...”
         # QTimer.singleShot(0, lambda: self.update_assistant_message("Echo正在思考..."))
         self.update_assistant_message("Echo正在思考...")
-        # 从文本框获取用户输入
-        user_message = self.user_message.toPlainText()
+
         # 清空文本框
         self.user_message.clear()
         # 启动 GPT API 通信线程

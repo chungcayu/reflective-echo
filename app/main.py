@@ -1,7 +1,11 @@
 import sys
+import os
 from PyQt6.QtWidgets import QApplication
 from gui import ReflectiveEchoUI
 from settings_manager import SettingsManager
+
+basedir = os.path.dirname(__file__)
+
 
 def main():
     # 创建一个 QApplication 实例
@@ -18,6 +22,7 @@ def main():
 
     # 开始事件循环
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()
