@@ -15,6 +15,9 @@ from settings_manager import SettingsManager
 SILENCE_THRESHOLD = 500  # 调整该值以识别静音
 SILENCE_TIME_LIMIT = 3  # 静音时间超过该值（秒）时，停止录音
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class SttThread(QThread):
     text_updated_signal = pyqtSignal(str)

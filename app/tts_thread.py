@@ -7,6 +7,10 @@ from pydub.playback import play
 
 from settings_manager import SettingsManager
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class TtsThread(QThread):
     finished_signal = pyqtSignal()
@@ -15,8 +19,15 @@ class TtsThread(QThread):
     def __init__(self, text):
         super().__init__()
         self.settings_manager = SettingsManager()
-        self.mm_group_id = self.settings_manager.get_setting("minimax_group_id")
-        self.mm_api_key = self.settings_manager.get_setting("minimax_api_key")
+        try:
+            self.mm_group_id = self.settings_manager.get_setting("minimax_group_id")
+            self.mm_api_key = self.settings_manager.get_setting("minimax_api_key")
+            logger.info("Successfully loaded minimax API keys from settings")
+        except Exception as e:
+            logger.exception("❗️Error occurred")
+            print(f"⚠️ 获取MiniMax API密钥时出现异常: {e}")
+            self.errorOccurred.emit("获取MiniMax API密钥时出现异常", str(e))
+            return
 
         self.text = text
 
@@ -60,6 +71,7 @@ class TtsThread(QThread):
                 ):  # 鉴权失败
                     # print("⚠️ API密钥信息可能有误，请检查您的APIKEY。")
                     self.errorOccurred.emit("鉴权失败", "API密钥信息可能有误，请检查您的APIKEY。")
+                    logger.exception("❗️Error occurred")
                     return None
 
             if "audio/mpeg" in response.headers.get("Content-Type", ""):
@@ -70,18 +82,26 @@ class TtsThread(QThread):
                 return None
 
         except HTTPError as http_err:
+            logger.exception("❗️Error occurred")
             print(f"⚠️ HTTP错误: {http_err}")
         except ConnectionError as conn_err:
+            logger.exception("❗️Error occurred")
             print(f"⚠️ 连接错误: {conn_err}")
         except Timeout as timeout_err:
+            logger.exception("❗️Error occurred")
             print(f"⚠️ 请求超时: {timeout_err}")
         except RequestException as req_err:
+            logger.exception("❗️Error occurred")
             print(f"⚠️ 请求异常: {req_err}")
 
         return None
 
     def play_audio(self, audio_data):
         """播放音频数据"""
-        print("⭕️ 开始播放语音...")
-        audio_segment = AudioSegment.from_file(io.BytesIO(audio_data), format="mp3")
-        play(audio_segment)
+        try:
+            print("⭕️ 开始播放语音...")
+            audio_segment = AudioSegment.from_file(io.BytesIO(audio_data), format="mp3")
+            play(audio_segment)
+        except Exception as e:
+            logger.exception("❗️Error occurred")
+            print(f"⚠️ 播放语音时出现异常: {e}")

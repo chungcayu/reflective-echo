@@ -26,6 +26,10 @@ from gpt_api_thread import GptApiThread
 from tts_thread import TtsThread
 from stt_thread import SttThread
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class SettingsDialog(QDialog):
     def __init__(self, settings_manager):

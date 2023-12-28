@@ -5,16 +5,35 @@ import sys
 
 from cryptography.fernet import Fernet, InvalidToken
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+def get_user_data_dir():
+    """
+    获取应用程序的用户数据目录。这通常是 ~/Library/Application Support/ReflectiveEcho。
+    """
+    home = os.path.expanduser("~")
+    return os.path.join(home, "Library", "Application Support", "ReflectiveEcho")
+
+
+def ensure_app_data_dir_exists():
+    """
+    确保应用程序的数据目录存在。如果不存在，则创建它。
+    """
+    app_data_dir = get_user_data_dir()
+    if not os.path.exists(app_data_dir):
+        os.makedirs(app_data_dir)
+    return app_data_dir
+
 
 class APIKeyManager:
     def __init__(self, key_path=None):
-        if key_path is None:
-            key_path = self.get_default_key_path()
-        self.key_path = key_path
+        self.key_path = key_path or self.get_default_key_path()
         self.key = self.load_key()
 
     def get_default_key_path(self):
-        key_path = self.get_app_data_dir()
+        key_path = ensure_app_data_dir_exists()
         return os.path.join(key_path, "secret.key")
 
     def generate_key(self):
@@ -44,28 +63,15 @@ class APIKeyManager:
             print(f"Error decrypting API key: {e}")
         return ""
 
-    def get_app_data_dir(self):
-        if getattr(sys, "frozen", False):
-            # 应用程序是打包后运行的
-            config_dir = os.path.dirname(sys.executable)
-        else:
-            # 应用程序在开发环境中运行
-            config_dir = os.path.dirname(os.path.abspath(__file__))
-
-        return config_dir
-
 
 class SettingsManager:
     def __init__(self, config_path=None, key_manager=None):
-        self.key_manager = APIKeyManager()
-        # if config_path is None:
-        #     config_path = self.get_default_config_path()
-        # self.config_path = config_path
+        self.key_manager = key_manager or APIKeyManager()
         self.config_path = config_path or self.get_default_config_path()
         self.settings = self.load_settings()
 
     def get_default_config_path(self):
-        config_path = self.key_manager.get_app_data_dir()
+        config_path = ensure_app_data_dir_exists()
         return os.path.join(config_path, "settings.json")
 
     def load_settings(self):

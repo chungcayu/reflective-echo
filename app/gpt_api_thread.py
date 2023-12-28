@@ -7,6 +7,10 @@ from openai import OpenAI
 from PyQt6.QtCore import QThread, pyqtSignal
 from settings_manager import SettingsManager
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class GptApiThread(QThread):
     response_signal = pyqtSignal(str)
@@ -16,7 +20,12 @@ class GptApiThread(QThread):
     def __init__(self, user_name):
         super().__init__()
         self.settings_manager = SettingsManager()
-        openai_api_key = self.settings_manager.get_setting("openai_api_key")
+        try:
+            openai_api_key = self.settings_manager.get_setting("openai_api_key")
+            logger.info("Successfully loaded minimax API keys from settings")
+        except Exception as e:
+            logger.exception("❗️Error occurred")
+
         self.client = OpenAI(api_key=openai_api_key)
 
         self.assistant_id = "asst_40vLVijSiJ0cRONnIFPOaeas"
@@ -35,12 +44,16 @@ class GptApiThread(QThread):
             thread = self.client.beta.threads.create()
             return thread.id
         except openai.APIConnectionError:
+            logger.exception("❗️Error occurred")
             print("无法连接到服务器，请检查网络连接。")
         except openai.RateLimitError:
+            logger.exception("❗️Error occurred")
             print("已达到速率限制，请稍后再试。")
         except openai.APIStatusError as e:
+            logger.exception("❗️Error occurred")
             print("接口返回非成功状态码:", e.status_code)
         except openai.APIError:
+            logger.exception("❗️Error occurred")
             print("发生了一个 OpenAI API 错误。")
         return None
 
@@ -54,12 +67,16 @@ class GptApiThread(QThread):
             )
             return message
         except openai.APIConnectionError:
+            logger.exception("❗️Error occurred")
             print("无法连接到服务器，请检查网络连接。")
         except openai.RateLimitError:
+            logger.exception("❗️Error occurred")
             print("已达到速率限制，请稍后再试。")
         except openai.APIStatusError as e:
+            logger.exception("❗️Error occurred")
             print("接口返回非成功状态码:", e.status_code)
         except openai.APIError:
+            logger.exception("❗️Error occurred")
             print("发生了一个 OpenAI API 错误。")
         return None
 
@@ -72,12 +89,16 @@ class GptApiThread(QThread):
             )
             return run.id
         except openai.APIConnectionError:
+            logger.exception("❗️Error occurred")
             print("无法连接到服务器，请检查网络连接。")
         except openai.RateLimitError:
+            logger.exception("❗️Error occurred")
             print("已达到速率限制，请稍后再试。")
         except openai.APIStatusError as e:
+            logger.exception("❗️Error occurred")
             print("接口返回非成功状态码:", e.status_code)
         except openai.APIError:
+            logger.exception("❗️Error occurred")
             print("发生了一个 OpenAI API 错误。")
         return None
 
@@ -90,12 +111,16 @@ class GptApiThread(QThread):
             )
             return run_list.status
         except openai.APIConnectionError:
+            logger.exception("❗️Error occurred")
             print("无法连接到服务器，请检查网络连接。")
         except openai.RateLimitError:
+            logger.exception("❗️Error occurred")
             print("已达到速率限制，请稍后再试。")
         except openai.APIStatusError as e:
+            logger.exception("❗️Error occurred")
             print("接口返回非成功状态码:", e.status_code)
         except openai.APIError:
+            logger.exception("❗️Error occurred")
             print("发生了一个 OpenAI API 错误。")
         return None
 
@@ -106,12 +131,16 @@ class GptApiThread(QThread):
             )
             return messages.data
         except openai.APIConnectionError:
+            logger.exception("❗️Error occurred")
             print("无法连接到服务器，请检查网络连接。")
         except openai.RateLimitError:
+            logger.exception("❗️Error occurred")
             print("已达到速率限制，请稍后再试。")
         except openai.APIStatusError as e:
+            logger.exception("❗️Error occurred")
             print("接口返回非成功状态码:", e.status_code)
         except openai.APIError:
+            logger.exception("❗️Error occurred")
             print("发生了一个 OpenAI API 错误。")
         return None
 
@@ -127,12 +156,16 @@ class GptApiThread(QThread):
             )
             return response.choices[0].message.content
         except openai.APIConnectionError:
+            logger.exception("❗️Error occurred")
             print("无法连接到服务器，请检查网络连接。")
         except openai.RateLimitError:
+            logger.exception("❗️Error occurred")
             print("已达到速率限制，请稍后再试。")
         except openai.APIStatusError as e:
+            logger.exception("❗️Error occurred")
             print("接口返回非成功状态码:", e.status_code)
         except openai.APIError:
+            logger.exception("❗️Error occurred")
             print("发生了一个 OpenAI API 错误。")
         return None
 
