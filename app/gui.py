@@ -31,6 +31,7 @@ class SettingsDialog(QDialog):
     def __init__(self, settings_manager):
         super(SettingsDialog, self).__init__()
         self.settings_manager = settings_manager
+        self.settings_dialog = None
         self.setWindowTitle("设置")
         self.setGeometry(100, 100, 600, 300)  # Adjusted for potential extra size
         self.setFixedSize(600, 300)
@@ -135,6 +136,17 @@ class SettingsDialog(QDialog):
         self.minimax_apikey_text.setText(
             self.settings_manager.get_setting("minimax_api_key") or ""
         )
+
+    def open_settings_dialog(self):
+        if self.settings_dialog is None:
+            self.settings_dialog = SettingsDialog(self.settings_manager)
+        self.settings_dialog.show()  # 显示设置对话框
+
+    def showEvent(self, event):
+        """重写 showEvent，在每次窗口显示时重新加载设置"""
+        print("显示设置对话框，正在重新加载设置...")
+        self.load_settings()
+        super(SettingsDialog, self).showEvent(event)
 
     def create_horizontal_separator(self):
         separator = QFrame()

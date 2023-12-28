@@ -14,8 +14,8 @@ class APIKeyManager:
         self.key = self.load_key()
 
     def get_default_key_path(self):
-        app_data_dir = self.get_app_data_dir()
-        return os.path.join(app_data_dir, "secret.key")
+        key_path = self.get_app_data_dir()
+        return os.path.join(key_path, "secret.key")
 
     def generate_key(self):
         key = Fernet.generate_key()
@@ -65,10 +65,11 @@ class SettingsManager:
         self.settings = self.load_settings()
 
     def get_default_config_path(self):
-        app_data_dir = self.key_manager.get_app_data_dir()
-        return os.path.join(app_data_dir, "settings.json")
+        config_path = self.key_manager.get_app_data_dir()
+        return os.path.join(config_path, "settings.json")
 
     def load_settings(self):
+        print("正在加载设置...")
         if not os.path.exists(self.config_path):
             # 如果配置文件不存在，创建一个默认配置
             self.save_settings(self.default_settings)
@@ -82,6 +83,7 @@ class SettingsManager:
             return settings
 
     def save_settings(self, new_settings):
+        print("正在保存设置...")
         # Encrypt settings before saving
         encrypted_settings = {
             key: self.key_manager.encrypt_api_key(value)
@@ -89,6 +91,11 @@ class SettingsManager:
         }
         with open(self.config_path, "w") as config_file:
             json.dump(encrypted_settings, config_file, indent=4)
+        self.reload_settings()  # 保存后重新加载设置，这个方法很重要
+
+    def reload_settings(self):
+        # 从文件重新加载设置
+        self.settings = self.load_settings()
 
     def get_setting(self, key):
         return self.settings.get(key)
