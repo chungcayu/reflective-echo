@@ -207,7 +207,7 @@ poetry.toml
 pyrightconfig.json
 
 ### Other ###
-assets/*
+design/*
 archive/*
 data/*
 settings.json
