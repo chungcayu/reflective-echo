@@ -9,6 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def get_user_data_dir():
     """
     获取应用程序的用户数据目录。这通常是 ~/Library/Application Support/ReflectiveEcho。
@@ -114,13 +115,15 @@ class SettingsManager:
     def default_settings(self):
         # 默认设置可以根据您的需要进行调整
         return {
-            "user_name": "游客",
+            "user_name": "",
             "save_location": "",
             "openai_api_key": "",
             "xunfei_app_id": "",
             "xunfei_api_key": "",
-            "minimax_group_id": "",
-            "minimax_api_key": "",
+            # "minimax_group_id": "",
+            # "minimax_api_key": "",
+            "volcano_app_id": "",
+            "volcano_access_token": "",
         }
 
     def isSettingsFilled(self):
@@ -129,8 +132,10 @@ class SettingsManager:
             "openai_api_key",
             "xunfei_app_id",
             "xunfei_api_key",
-            "minimax_group_id",
-            "minimax_api_key",
+            # "minimax_group_id",
+            # "minimax_api_key",
+            "volcano_app_id",
+            "volcano_access_token",
         ]
 
         # 确保所有必要的设置都已被填写

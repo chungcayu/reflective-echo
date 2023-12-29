@@ -92,19 +92,33 @@ class SettingsDialog(QDialog):
         self.grid_layout.addWidget(self.xunfei_apikey_label, 6, 0)
         self.grid_layout.addWidget(self.xunfei_apikey_text, 6, 1, 1, 2)
 
-        self.minimax_groupid_label = QLabel("MiniMax Group ID:")
-        self.minimax_groupid_label.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.minimax_groupid_text = QLineEdit("")
-        self.minimax_groupid_text.setEchoMode(QLineEdit.EchoMode.Password)
-        self.grid_layout.addWidget(self.minimax_groupid_label, 7, 0)
-        self.grid_layout.addWidget(self.minimax_groupid_text, 7, 1, 1, 2)
+        # self.minimax_groupid_label = QLabel("MiniMax Group ID:")
+        # self.minimax_groupid_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        # self.minimax_groupid_text = QLineEdit("")
+        # self.minimax_groupid_text.setEchoMode(QLineEdit.EchoMode.Password)
+        # self.grid_layout.addWidget(self.minimax_groupid_label, 7, 0)
+        # self.grid_layout.addWidget(self.minimax_groupid_text, 7, 1, 1, 2)
 
-        self.minimax_apikey_label = QLabel("MiniMax API Key:")
-        self.minimax_apikey_label.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.minimax_apikey_text = QLineEdit("")
-        self.minimax_apikey_text.setEchoMode(QLineEdit.EchoMode.Password)
-        self.grid_layout.addWidget(self.minimax_apikey_label, 8, 0)
-        self.grid_layout.addWidget(self.minimax_apikey_text, 8, 1, 1, 2)
+        # self.minimax_apikey_label = QLabel("MiniMax API Key:")
+        # self.minimax_apikey_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        # self.minimax_apikey_text = QLineEdit("")
+        # self.minimax_apikey_text.setEchoMode(QLineEdit.EchoMode.Password)
+        # self.grid_layout.addWidget(self.minimax_apikey_label, 8, 0)
+        # self.grid_layout.addWidget(self.minimax_apikey_text, 8, 1, 1, 2)
+
+        self.volcano_appid_label = QLabel("Volcano App ID:")
+        self.volcano_appid_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.volcano_appid_text = QLineEdit("")
+        self.volcano_appid_text.setEchoMode(QLineEdit.EchoMode.Password)
+        self.grid_layout.addWidget(self.volcano_appid_label, 7, 0)
+        self.grid_layout.addWidget(self.volcano_appid_text, 7, 1, 1, 2)
+
+        self.volcano_access_token_label = QLabel("Volcano Access Token:")
+        self.volcano_access_token_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.volcano_access_token_text = QLineEdit("")
+        self.volcano_access_token_text.setEchoMode(QLineEdit.EchoMode.Password)
+        self.grid_layout.addWidget(self.volcano_access_token_label, 8, 0)
+        self.grid_layout.addWidget(self.volcano_access_token_text, 8, 1, 1, 2)
 
         # 保存按钮
         self.save_button = QPushButton("保存")
@@ -134,11 +148,17 @@ class SettingsDialog(QDialog):
         self.xunfei_apikey_text.setText(
             self.settings_manager.get_setting("xunfei_api_key") or ""
         )
-        self.minimax_groupid_text.setText(
-            self.settings_manager.get_setting("minimax_group_id") or ""
+        # self.minimax_groupid_text.setText(
+        #     self.settings_manager.get_setting("minimax_group_id") or ""
+        # )
+        # self.minimax_apikey_text.setText(
+        #     self.settings_manager.get_setting("minimax_api_key") or ""
+        # )
+        self.volcano_appid_text.setText(
+            self.settings_manager.get_setting("volcano_app_id") or ""
         )
-        self.minimax_apikey_text.setText(
-            self.settings_manager.get_setting("minimax_api_key") or ""
+        self.volcano_access_token_text.setText(
+            self.settings_manager.get_setting("volcano_access_token") or ""
         )
 
     def open_settings_dialog(self):
@@ -186,11 +206,14 @@ class SettingsDialog(QDialog):
             return False
         if not self.xunfei_apikey_text.text():
             return False
-        if not self.minimax_groupid_text.text():
+        # if not self.minimax_groupid_text.text():
+        #     return False
+        # if not self.minimax_apikey_text.text():
+        #     return False
+        if not self.volcano_appid_text.text():
             return False
-        if not self.minimax_apikey_text.text():
+        if not self.volcano_access_token_text.text():
             return False
-
         return True
 
     def save_settings(self):
@@ -201,8 +224,10 @@ class SettingsDialog(QDialog):
             "openai_api_key": self.openai_apikey_text.text(),
             "xunfei_app_id": self.xunfei_appid_text.text(),
             "xunfei_api_key": self.xunfei_apikey_text.text(),
-            "minimax_group_id": self.minimax_groupid_text.text(),
-            "minimax_api_key": self.minimax_apikey_text.text(),
+            # "minimax_group_id": self.minimax_groupid_text.text(),
+            # "minimax_api_key": self.minimax_apikey_text.text(),
+            "volcano_app_id": self.volcano_appid_text.text(),
+            "volcano_access_token": self.volcano_access_token_text.text(),
         }
         self.settings_manager.save_settings(new_settings)
         self.accept()
@@ -389,18 +414,18 @@ class ReflectiveEchoUI(QMainWindow):
             self.update_assistant_message("准备复盘...")
             user_name = self.settings_manager.get_setting("user_name")
 
-            # 创建并启动 GPT API 通信线程
-            if not self.gpt_api_thread:
-                self.gpt_api_thread = GptApiThread(user_name)
-                self.gpt_api_thread.response_signal.connect(self.handle_gpt_response)
-                self.gpt_api_thread.update_message_signal.connect(
-                    self.update_assistant_message
-                )
-                self.gpt_api_thread.start()
+        # 创建并启动 GPT API 通信线程
+        if not self.gpt_api_thread:
+            self.gpt_api_thread = GptApiThread(user_name)
+            self.gpt_api_thread.response_signal.connect(self.handle_gpt_response)
+            self.gpt_api_thread.update_message_signal.connect(
+                self.update_assistant_message
+            )
+            self.gpt_api_thread.start()
 
     def promptForSetting(self):
         msgBox = QMessageBox()
-        customIcon = QPixmap("../assets/reflective-echo-logo.png")
+        customIcon = QPixmap("../assets/logo.png")
         msgBox.setIconPixmap(
             customIcon.scaled(50, 50, Qt.AspectRatioMode.KeepAspectRatio)
         )

@@ -1,4 +1,7 @@
+import base64
 import io
+import json
+import uuid
 import requests
 from requests.exceptions import RequestException, HTTPError, ConnectionError, Timeout
 from PyQt6.QtCore import QThread, pyqtSignal
@@ -22,6 +25,11 @@ class TtsThread(QThread):
         try:
             self.mm_group_id = self.settings_manager.get_setting("minimax_group_id")
             self.mm_api_key = self.settings_manager.get_setting("minimax_api_key")
+            self.vol_appid = self.settings_manager.get_setting("volcano_app_id")
+            self.vol_access_token = self.settings_manager.get_setting(
+                "volcano_access_token"
+            )
+
             logger.info("Successfully loaded minimax API keys from settings")
         except Exception as e:
             logger.exception("❗️Error occurred")
@@ -33,7 +41,8 @@ class TtsThread(QThread):
 
     def run(self):
         # 获取音频数据
-        audio_data = self.minimax_tts(self.text)
+        # audio_data = self.minimax_tts(self.text)
+        audio_data = self.volcano_tts(self.text)
         if audio_data:
             # 播放音频
             self.play_audio(audio_data)
@@ -93,8 +102,57 @@ class TtsThread(QThread):
         except RequestException as req_err:
             logger.exception("❗️Error occurred")
             print(f"⚠️ 请求异常: {req_err}")
-
         return None
+
+    def volcano_tts(self, text):
+        print("⭕️ 开始调用Volcano API...")
+        voice_type = "BV700_V2_streaming"
+        vol_cluster = "volcano_tts"
+        api_url = "https://openspeech.bytedance.com/api/v1/tts"
+        header = {"Authorization": f"Bearer;{self.vol_access_token}"}
+        request_json = {
+            "app": {
+                "appid": self.vol_appid,
+                "token": "access_token",
+                "cluster": vol_cluster,
+            },
+            "user": {"uid": "388808087185088"},
+            "audio": {
+                "voice_type": voice_type,
+                "encoding": "mp3",
+                "speed_ratio": 1.0,
+                "volume_ratio": 1.0,
+                "pitch_ratio": 1.0,
+            },
+            "request": {
+                "reqid": str(uuid.uuid4()),
+                "text": text,
+                "text_type": "plain",
+                "operation": "query",
+                "with_frontend": 1,
+                "frontend_type": "unitTson",
+            },
+        }
+        try:
+            resp = requests.post(api_url, json.dumps(request_json), headers=header)
+            if resp.status_code == 200:
+                resp_code = resp.json()["code"]
+                if resp_code == 3000:
+                    print("✅ 调用成功")
+                    data = resp.json()["data"]
+                    response = base64.b64decode(data)
+                    return response
+                elif resp_code == 3001:
+                    print(f"⚠️ 语音合成失败，错误代码：{resp_code}")
+                    print(resp.json()["message"])
+                    return None
+                else:
+                    print(f"⚠️ 语音合成失败，错误代码：{resp_code}")
+                    print(resp.json()["message"])
+                    return None
+
+        except Exception as e:
+            e.with_traceback()
 
     def play_audio(self, audio_data):
         """播放音频数据"""
