@@ -28,8 +28,9 @@ class GptApiThread(QThread):
 
         self.client = OpenAI(api_key=openai_api_key)
 
-        self.assistant_id = "asst_40vLVijSiJ0cRONnIFPOaeas"
+        self.assistant_id = "asst_40vLVijSiJ0cRONnIFPOaeas"  # asst_40vLVijSiJ0cRONnIFPOaeas | asst_38y14wqWGJsKn8XvlTgSqAzx``
         self.thread_id = self.create_thread()
+        print("thread_id:", self.thread_id)
         self.user_name = user_name
         self.user_message = None
         # self.start_processing_signal.connect(self.chat_with_assistant)

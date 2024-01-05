@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
     QDialog,
     QMessageBox,
     QLabel,
+    QScrollArea,
 )
 from PyQt6.QtCore import pyqtSignal, Qt, QUrl, QTimer, QThread
 from PyQt6.QtGui import QDesktopServices, QAction, QTextCursor, QPixmap, QCursor
@@ -244,7 +245,8 @@ class ReflectiveEchoUI(QMainWindow):
         super().__init__()
         self.setWindowTitle("Reflective Echo")
         self.setGeometry(100, 100, 700, 600)
-        self.setFixedSize(700, 600)
+        self.setMinimumSize(700, 600)
+        # self.setFixedSize(700, 600)
 
         # self.settings_manager = SettingsManager()
         self.settings_manager = settings_manager
@@ -299,28 +301,71 @@ class ReflectiveEchoUI(QMainWindow):
 
         # Assistant layout
         self.assistant_layout = QHBoxLayout()
+        self.assistant_layout.setContentsMargins(0, 0, 0, 0)
         self.assistant_label = QLabel("Echo: ")
         self.assistant_label.setAlignment(
             Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight
         )
 
         self.assistant_message = QLabel(
-            "ReflectiveEcho, the AI-driven conversation partner that makes weekly reflection as easy and natural as chatting with a friend."
+            """
+            ReflectiveEcho, the AI-driven conversation partner that makes weekly reflection as easy and natural as chatting with a friend.
+            """
         )
         self.assistant_message.setWordWrap(True)
-        self.assistant_message.setFixedSize(600, 200)
+        # self.assistant_message.setFixedSize(600, 200)
         self.assistant_message.setStyleSheet(
             "QLabel {"
-            "   border: 1px solid gray;"
-            "   border-radius: 5px;"  # Set the corner radius here
-            "   padding: 5px;"
+            # "   border: 1px solid gray;"
+            # "   border-radius: 5px;"  # Set the corner radius here
+            "   margin: 0px 0 0px 0;"
+            "   padding-top: 0px;"
+            "   padding-bottom: 0px;"
+            "   padding-left: 5px;"
+            "   padding-right: 5px;"
             "}"
         )
-        # assistant_message.setAlignment(
-        #     Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignTop
-        # )
+        # 创建一个 QScrollArea 并将 QLabel 添加到其中
+        scroll_area = QScrollArea()
+        scroll_area.setContentsMargins(0, 0, 0, 0)
+        scroll_area.setWidgetResizable(True)  # 设置为可调整大小
+        scroll_area.setWidget(self.assistant_message)
+
+        scroll_area.setStyleSheet(
+            """
+            QScrollArea {
+                border: 1px solid gray;
+                border-radius: 5px;
+            }
+            QScrollBar:vertical {
+                border: none;
+                width: 5px;  /* 更细的滚动条 */
+                margin: 0px 0 0px 0;
+                border-radius: 2px;
+            }
+            QScrollBar::handle:vertical {
+                background: darkgray;  /* 滚动条手柄的颜色 */
+                min-height: 10px;
+                border-radius: 2px;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                border: none;
+                background: none;
+            }
+            QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {
+                background: none;
+            }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                background: none;
+            }
+        """
+        )
+
+        scroll_area.setFixedSize(600, 200)
+
         self.assistant_layout.addWidget(self.assistant_label)
-        self.assistant_layout.addWidget(self.assistant_message)
+        # self.assistant_layout.addWidget(self.assistant_message)
+        self.assistant_layout.addWidget(scroll_area)
 
         # User layout
         self.user_layout = QHBoxLayout()
