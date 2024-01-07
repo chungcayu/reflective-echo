@@ -44,7 +44,6 @@ class MessageUI(QWidget):
                 color: #000000;
                 border-radius: 5px;
                 border: none;
-                max-height: 25px;
                 padding: 5px;
             }
         """
@@ -72,7 +71,6 @@ class MessageUI(QWidget):
                 color: #000000;
                 border-radius: 5px;
                 border: none;
-                min-height: 25px;
                 padding: 5px;
             }
         """
@@ -100,6 +98,22 @@ class ChatUI(QWidget):
         self.main_layout = QVBoxLayout()
         self.main_layout.setContentsMargins(20, 20, 20, 20)
         self.main_layout.setSpacing(10)
+
+        self.intro_label = QLabel("Review - Daily")
+        self.intro_label.setStyleSheet(
+            """
+            QLabel {
+                font-size: 14px;
+                font-weight: bold;
+                color: #000000;
+                background-color: #F5F5F5;
+                padding: 5px;
+                border-radius: 5px;
+            }
+        """
+        )
+        self.intro_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.main_layout.addWidget(self.intro_label)
 
         # 创建滚动区域
         self.scroll_area = QScrollArea()
@@ -141,10 +155,6 @@ class ChatUI(QWidget):
 
         # 将消息容器设置为滚动区域的子控件
         self.scroll_area.setWidget(self.msg_display_widget)
-
-        # # 默认初始化消息
-        # assistant_default_msg = MessageUI("正在准备中...")
-        # self.msg_display_layout.addWidget(assistant_default_msg)
 
         # 将滚动区域添加到主布局
         self.main_layout.addWidget(self.scroll_area, 1)
