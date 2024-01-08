@@ -1,3 +1,4 @@
+import os
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
@@ -10,8 +11,10 @@ from PyQt6.QtWidgets import (
     QSpacerItem,
     QSizePolicy,
 )
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import QIcon, QPixmap, QCursor
+
+basedir = os.path.dirname(__file__)
 
 
 class MessageUI(QWidget):
@@ -23,7 +26,7 @@ class MessageUI(QWidget):
         msg_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         assistant_avatar = QLabel()
-        assistant_pixmap = QPixmap("assets/echo_avatar.png")
+        assistant_pixmap = QPixmap(os.path.join(basedir, "assets", "echo_avatar.png"))
         assistant_pixmap = assistant_pixmap.scaled(
             40,
             40,
@@ -50,7 +53,7 @@ class MessageUI(QWidget):
         )
 
         user_avatar = QLabel()
-        user_pixmap = QPixmap("assets/user_avatar.png")
+        user_pixmap = QPixmap(os.path.join(basedir, "assets", "user_avatar.png"))
         user_pixmap = user_pixmap.scaled(
             40,
             40,
@@ -99,6 +102,7 @@ class ChatUI(QWidget):
         self.main_layout.setContentsMargins(20, 20, 20, 20)
         self.main_layout.setSpacing(10)
 
+        # 说明区域
         self.intro_label = QLabel("Review - Daily")
         self.intro_label.setStyleSheet(
             """
@@ -115,6 +119,7 @@ class ChatUI(QWidget):
         self.intro_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(self.intro_label)
 
+        # 消息显示区域
         # 创建滚动区域
         self.scroll_area = QScrollArea()
         self.scroll_area.setContentsMargins(0, 0, 0, 0)
@@ -159,10 +164,12 @@ class ChatUI(QWidget):
         # 将滚动区域添加到主布局
         self.main_layout.addWidget(self.scroll_area, 1)
 
-        input_layout = QHBoxLayout()
+        # 输入区域
+        self.input_area_layout = QHBoxLayout()
+        self.input_area_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.input_field = QTextEdit()
-        self.input_field.setStyleSheet(
+        self.input_edit = QTextEdit()
+        self.input_edit.setStyleSheet(
             """
             QTextEdit {
                 background-color: #F5F5F5;
@@ -175,25 +182,78 @@ class ChatUI(QWidget):
             }
         """
         )
-        input_layout.addWidget(self.input_field)
 
-        button_layout = QHBoxLayout()
-        button_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
+        button_style = (
+            "QPushButton {"
+            "   border: none;"
+            "   border-radius: 5px;"
+            "   background-color: none;"
+            "}"
+        )
 
-        self.voice_button = QPushButton("🎙️")
-        self.voice_button.setFixedSize(40, 40)
+        self.voice_button = QPushButton()
+        self.voice_button.setIcon(
+            QIcon(os.path.join(basedir, "assets", "mic_button.png"))
+        )
+        self.voice_button.setIconSize(QSize(20, 20))
+        self.voice_button.setFixedSize(QSize(30, 30))
+        # self.voice_button.setStyleSheet(
+        #     """
+        #     QPushButton {
+        #         background-color: none;
+        #         border: none;
+        #         margin: 0px 0 0px 0
+        #     }
+        # """
+        # )
+        self.voice_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.voice_button.clicked.connect(self.on_voice_button_clicked)
 
-        self.send_button = QPushButton("✅")
-        self.send_button.setFixedSize(40, 40)
+        self.send_button = QPushButton()
+        self.send_button.setIcon(
+            QIcon(os.path.join(basedir, "assets", "send_button.png"))
+        )
+        self.send_button.setIconSize(QSize(20, 20))
+        self.send_button.setFixedSize(QSize(30, 30))
+        # self.send_button.setStyleSheet(
+        #     """
+        #     QPushButton {
+        #         background-color: none;
+        #         border: none;
+        #         margin: 0px 0 0px 0
+        #     }
+        # """
+        # )
+        self.send_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.send_button.clicked.connect(self.on_send_button_clicked)
 
-        button_layout.addWidget(self.voice_button)
-        button_layout.addWidget(self.send_button)
+        self.complete_button = QPushButton()
+        self.complete_button.setIcon(
+            QIcon(os.path.join(basedir, "assets", "complete_button.png"))
+        )
+        self.complete_button.setIconSize(QSize(20, 20))
+        self.complete_button.setFixedSize(QSize(30, 30))
+        # self.complete_button.setStyleSheet(
+        #     """
+        #     QPushButton {
+        #         background-color: none;
+        #         border: none;
+        #         margin: 0px 0 0px 0
+        #     }
+        # """
+        # )
+        self.complete_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.complete_button.clicked.connect(self.on_complete_button_clicked)
+
+        self.setStyleSheet(button_style)
+        self.input_area_layout.addWidget(self.complete_button)
+        self.input_area_layout.addWidget(self.input_edit)
+        self.input_area_layout.addWidget(self.voice_button)
+        self.input_area_layout.addWidget(self.send_button)
 
         # 组合布局
-        self.main_layout.addLayout(input_layout)
-        self.main_layout.addLayout(button_layout)
+
+        self.main_layout.addLayout(self.input_area_layout)
         self.setLayout(self.main_layout)
 
     def initialize(self):
@@ -204,8 +264,8 @@ class ChatUI(QWidget):
 
     def send_msg_to_display(self):
         # 获取输入文本并清除输入框
-        text = self.input_field.toPlainText()
-        self.input_field.clear()
+        text = self.input_edit.toPlainText()
+        self.input_edit.clear()
 
         # 移除已存在的伸缩量（如果有）
         if self.msg_display_layout.count() > 0:
@@ -226,10 +286,14 @@ class ChatUI(QWidget):
         self.msg_display_layout.addStretch(1)
 
     def on_voice_button_clicked(self):
-        pass
+        print("Voice button clicked")
 
     def on_send_button_clicked(self):
+        print("Send button clicked")
         self.send_msg_to_display()
+
+    def on_complete_button_clicked(self):
+        print("Complete button clicked")
 
 
 if __name__ == "__main__":
