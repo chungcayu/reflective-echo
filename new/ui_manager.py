@@ -11,7 +11,7 @@ class UIManager:
         self.main_window = QMainWindow()
         self.main_window.setWindowTitle("ReflectiveEcho")
         self.main_window.setMinimumSize(600, 800)
-        # self.setStyleSheet("background-color: #FFFBF5;")
+        self.main_window.setStyleSheet("background-color: #FFFBF5;")
 
         self.default_ui = DefaultUI(self)
         self.chat_ui = ChatUI(self)
@@ -36,36 +36,14 @@ class UIManager:
 
         # File menu
         file_menu = menu_bar.addMenu("File")
-        file_menu.addAction("New")
-        file_menu.addAction("Open")
-        file_menu.addAction("Save")
-        file_menu.addAction("Save As")
-        file_menu.addSeparator()
-        file_menu.addAction("Exit")
-
-        # Edit menu
-        edit_menu = menu_bar.addMenu("Edit")
-        edit_menu.addAction("Undo")
-        edit_menu.addAction("Redo")
-        edit_menu.addSeparator()
-        edit_menu.addAction("Cut")
-        edit_menu.addAction("Copy")
-        edit_menu.addAction("Paste")
-        edit_menu.addSeparator()
-        edit_menu.addAction("Find")
-        edit_menu.addAction("Replace")
-        edit_menu.addAction("Select All")
+        file_menu.addAction("Open Folder")
 
         # View menu
-        view_menu = menu_bar.addMenu("View")
-        view_menu.addAction("Zoom In")
-        view_menu.addAction("Zoom Out")
-        view_menu.addAction("Reset Zoom")
-        view_menu.addSeparator()
-        view_menu.addAction("Toggle Full Screen")
+        view_menu = menu_bar.addMenu("Settings")
+        view_menu.addAction("Settings")
+        view_menu.addAction("Templates")
 
         # Help menu
         help_menu = menu_bar.addMenu("Help")
         help_menu.addAction("About")
         help_menu.addAction("Documentation")
-        help_menu.addAction("Report Issue")
