@@ -217,4 +217,5 @@ app/settings.json
 demo.py
 minimax_response.json
 demo/*
+design.txt
 # End of https://www.toptal.com/developers/gitignore/api/python,macos

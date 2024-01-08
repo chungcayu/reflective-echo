@@ -3,6 +3,7 @@ import io
 import json
 import uuid
 import requests
+import time
 from requests.exceptions import RequestException, HTTPError, ConnectionError, Timeout
 from PyQt6.QtCore import QThread, pyqtSignal
 from pydub import AudioSegment
@@ -104,7 +105,7 @@ class TtsThread(QThread):
             print(f"⚠️ 请求异常: {req_err}")
         return None
 
-    def volcano_tts(self, text):
+    def volcano_tts_short(self, text):
         print("⭕️ 开始调用Volcano API...")
         voice_type = "BV700_V2_streaming"
         vol_cluster = "volcano_tts"
@@ -153,6 +154,110 @@ class TtsThread(QThread):
 
         except Exception as e:
             e.with_traceback()
+
+    def submit_task_tts(self, text):
+        """发送请求，输入文本，返回任务ID和任务状态"""
+        print("⭕️ 正在提交任务...")
+
+        voice_type = "BV700_V2_streaming"
+        url = "https://openspeech.bytedance.com/api/v1/tts_async/submit"
+        headers = {
+            "Authorization": f"Bearer; {self.vol_access_token}",
+            "Content-Type": "application/json",
+            "Resource-Id": "volc.tts_async.default",
+        }
+        payload = {
+            "appid": self.vol_appid,
+            "text": text,
+            "format": "mp3",
+            "voice_type": voice_type,
+            "sentence_interval": 500,
+        }
+
+        try:
+            response = requests.post(url, headers=headers, data=json.dumps(payload))
+
+            # Check for successful request
+            if response.status_code == 200:
+                response = response.json()
+                task_id = response.get("task_id")
+                task_status = response.get("task_status")
+                print(f"Processing task: {task_id}, its status: {task_status}")
+                return task_id, task_status
+            else:
+                raise Exception(f"Error: {response.status_code} - {response.text}")
+
+        except requests.exceptions.RequestException as e:
+            # Handle any errors related to the requests library
+            print(f"RequestException occurred: {e}")
+            # Depending on the situation, you may want to log the error, retry the request, etc.
+        except ValueError as ve:
+            # Handle missing task_id or task_status
+            print(f"ValueError: {ve}")
+        except Exception as other_exception:
+            # Make sure to handle any other exception that is not caught by specific except blocks
+            print(f"An unexpected error occurred: {other_exception}")
+
+    def get_audio_url(self, task_id, task_status):
+        print("⭕️ 正在获取链接...")
+        """发送请求，输入任务ID和状态，返回语音URL"""
+
+        url = f"https://openspeech.bytedance.com/api/v1/tts_async/query"
+        headers = {
+            "Authorization": f"Bearer; {self.vol_access_token}",
+            "Content-Type": "application/json",
+            "Resource-Id": "volc.tts_async.default",
+        }
+        q_params = {"appid": self.vol_appid, "task_id": task_id}
+
+        try:
+            while task_status == 0:
+                time.sleep(0.5)
+                response = requests.get(url, headers=headers, params=q_params)
+                if response.status_code == 200:
+                    response = response.json()
+                    task_status = response.get("task_status")
+                    if task_status is None:
+                        raise ValueError("Missing 'task_status' in response.")
+                else:
+                    raise Exception(
+                        f"Error: Unsuccessful status code {response.status_code} - {response.text}"
+                    )
+
+            if task_status == 1:
+                audio_url = response.get("audio_url")
+                if not audio_url:
+                    raise ValueError("Missing 'audio_url' in response.")
+                return audio_url
+            else:
+                raise Exception(
+                    "Error: Unsuccessful task status - the task did not complete successfully."
+                )
+
+        except requests.exceptions.RequestException as e:
+            print(f"RequestException occurred: {e}")
+            # Depending on the situation, proper error handling code would go here.
+            # That might involve logging the error, retrying the request, or raising an exception.
+        except ValueError as ve:
+            print(f"ValueError: {ve}")
+            # Handle missing data in the response.
+        except Exception as ex:
+            print(f"An unexpected error occurred: {ex}")
+            # Handle other unforeseen errors.
+
+    def volcano_tts(self, text):
+        """调用火山引擎API，输入文本，返回语音URL"""
+        print("⭕️ 开始调用Volcano API...")
+        task_id, task_status = self.submit_task_tts(text)
+        audio_url = self.get_audio_url(task_id, task_status)
+        print(f"Audio url: {audio_url}")
+        print("⭕️ 正在获取语音文件...")
+        try:
+            response = requests.get(audio_url)
+            return response.content
+        except requests.exceptions.RequestException as e:
+            print(f"RequestException occurred: {e}")
+        return response
 
     def play_audio(self, audio_data):
         """播放音频数据"""
