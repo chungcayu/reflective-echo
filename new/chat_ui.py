@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon, QPixmap, QCursor
 
+
 basedir = os.path.dirname(__file__)
 
 
@@ -92,8 +93,9 @@ class MessageUI(QWidget):
 
 
 class ChatUI(QWidget):
-    def __init__(self):
+    def __init__(self, ui_manager):
         super().__init__()
+        self.ui_manager = ui_manager
         self.initUI()
         self.initialize()
 
@@ -167,6 +169,7 @@ class ChatUI(QWidget):
         # 输入区域
         self.input_area_layout = QHBoxLayout()
         self.input_area_layout.setContentsMargins(0, 0, 0, 0)
+        self.input_area_layout.setSpacing(5)
 
         self.input_edit = QTextEdit()
         self.input_edit.setStyleSheet(
@@ -197,15 +200,6 @@ class ChatUI(QWidget):
         )
         self.voice_button.setIconSize(QSize(20, 20))
         self.voice_button.setFixedSize(QSize(30, 30))
-        # self.voice_button.setStyleSheet(
-        #     """
-        #     QPushButton {
-        #         background-color: none;
-        #         border: none;
-        #         margin: 0px 0 0px 0
-        #     }
-        # """
-        # )
         self.voice_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.voice_button.clicked.connect(self.on_voice_button_clicked)
 
@@ -215,15 +209,6 @@ class ChatUI(QWidget):
         )
         self.send_button.setIconSize(QSize(20, 20))
         self.send_button.setFixedSize(QSize(30, 30))
-        # self.send_button.setStyleSheet(
-        #     """
-        #     QPushButton {
-        #         background-color: none;
-        #         border: none;
-        #         margin: 0px 0 0px 0
-        #     }
-        # """
-        # )
         self.send_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.send_button.clicked.connect(self.on_send_button_clicked)
 
@@ -233,15 +218,6 @@ class ChatUI(QWidget):
         )
         self.complete_button.setIconSize(QSize(20, 20))
         self.complete_button.setFixedSize(QSize(30, 30))
-        # self.complete_button.setStyleSheet(
-        #     """
-        #     QPushButton {
-        #         background-color: none;
-        #         border: none;
-        #         margin: 0px 0 0px 0
-        #     }
-        # """
-        # )
         self.complete_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.complete_button.clicked.connect(self.on_complete_button_clicked)
 
@@ -294,6 +270,10 @@ class ChatUI(QWidget):
 
     def on_complete_button_clicked(self):
         print("Complete button clicked")
+        self.switch_to_mainwindown()
+
+    def switch_to_mainwindown(self):
+        self.ui_manager.show_default_ui()
 
 
 if __name__ == "__main__":

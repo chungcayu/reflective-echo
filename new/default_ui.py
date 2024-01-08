@@ -1,7 +1,6 @@
 import sys
 import os
 from PyQt6.QtWidgets import (
-    QMainWindow,
     QVBoxLayout,
     QHBoxLayout,
     QWidget,
@@ -12,22 +11,20 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
 
-from chat_ui import ChatUI
 
 basedir = os.path.dirname(__file__)
 
 
-class ReflectiveEchoUI(QMainWindow):
-    def __init__(self):
+class DefaultUI(QWidget):
+    def __init__(self, ui_manager):
         super().__init__()
-        self.setWindowTitle("ReflectiveEcho")
-        self.setMinimumSize(400, 600)
+        # self.setWindowTitle("ReflectiveEcho")
+        # self.setMinimumSize(400, 600)
         # self.setStyleSheet("background-color: #FFFBF5;")
+        self.ui_manager = ui_manager
         self.initUI()
 
     def initUI(self):
-        self.main_widget = QWidget()
-
         # 窗口主布局
         self.main_layout = QVBoxLayout()
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -96,21 +93,17 @@ class ReflectiveEchoUI(QMainWindow):
         self.main_layout.addLayout(self.type_layout)
         self.main_layout.addWidget(start_button)
 
-        # Set the main widget and layout
-        self.main_widget.setLayout(self.main_layout)
-        self.setCentralWidget(self.main_widget)
+        self.setLayout(self.main_layout)
 
     def on_start_button_clicked(self):
         # TODO: Check if the user has set settings
         # TODO: If not, show the settings window
         # TODO: Get the review type from the combo box
-        # TODO: Reload the main window UI to ChatUI
+        # Reload the main window UI to ChatUI
         self.switch_to_chat()
         # TODO: Invoke LLM to start the review
 
         print("Start button clicked")
 
     def switch_to_chat(self):
-        self.chat_ui = ChatUI()
-        self.takeCentralWidget()
-        self.setCentralWidget(self.chat_ui)
+        self.ui_manager.show_chat_ui()

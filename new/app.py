@@ -2,17 +2,18 @@ import sys
 import os
 from PyQt6.QtWidgets import QApplication
 
-from main_gui import ReflectiveEchoUI
+from ui_manager import UIManager
 
 basedir = os.path.dirname(__file__)
 
 
-def main():
-    app = QApplication(sys.argv)
-    window = ReflectiveEchoUI()
-    window.show()
-    app.exec()
+# def main():
+#     app = QApplication(sys.argv)
+#     window = ReflectiveEchoUI()
+#     window.show()
+#     app.exec()
 
 
 if __name__ == "__main__":
-    main()
+    manager = UIManager()
+    manager.run()
